@@ -3,7 +3,9 @@
   const BKEY = 'fb-badges-v1';
   const SKEY = 'fb-stats-v1'; // compteur d'observations
 
-  const CATALOG = {
+  const CATALOG = {quiz_first:  { icon:'🎓', label:'Premier quiz' },
+quiz_80:     { icon:'🏅', label:'Expert du quiz (≥80%)' },
+quiz_perfect:{ icon:'🥳', label:'Score parfait (100%)' },
     first_obs: { icon:'🎉', label:'Première observation' },
     five_obs:  { icon:'🥇', label:'Explorateur (5 obs)' },
     owl_spot:  { icon:'🦉', label:'Guetteur de nuit (Hibou)' },
