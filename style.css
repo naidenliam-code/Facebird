@@ -1,3 +1,10 @@
+body {
+  background: #e6f7ff; /* bleu très clair */
+}
+
+h1 {
+  color: #188038; /* vert bien visible */
+}
 /* FaceBird – style global */
 :root{--blue:#2c7be5;--bg:#f9f9f9;--text:#1f1f1f}
 *{box-sizing:border-box}
