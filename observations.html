@@ -20,25 +20,48 @@
     <a href="profil.html">Profil</a>
   </nav>
 
-  <main class="container grid">
+  <main class="container">
+  <!-- Formulaire -->
+  <div class="card">
+    <h2>➕ Ajouter une observation</h2>
+    <form id="obs-form">
+      <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        <label>Espèce
+          <input name="espece" required placeholder="Mésange bleue" />
+        </label>
+        <label>Lieu / Contexte (badge)
+          <input name="lieu" placeholder="Jardin, Parc, Forêt…" />
+        </label>
+        <label>Date
+          <input name="date" type="date" />
+        </label>
+      </div>
+      <label style="display:block;margin-top:10px">Description
+        <textarea name="desc" rows="3" placeholder="Comportement, météo, etc."></textarea>
+      </label>
+      <button class="btn" type="submit" style="margin-top:10px">Ajouter</button>
+    </form>
+  </div>
+
+  <!-- Grille d’observations -->
+  <div id="obs-grid" class="grid">
     <div class="card">
       <h3>🐦 Mésange bleue</h3>
       <p><span class="badge">Jardin</span> • Aujourd’hui</p>
       <p>Petite boule d’énergie, très active ce matin.</p>
     </div>
-
     <div class="card">
       <h3>🕊️ Pigeon ramier</h3>
       <p><span class="badge">Parc</span> • Hier</p>
       <p>Très rond et relax sous un arbre 😂</p>
     </div>
-
     <div class="card">
       <h3>🦉 Hibou (rare)</h3>
       <p><span class="badge">Nuit</span> • Vérifié GPS</p>
       <p>Observation validée → avatar à débloquer !</p>
     </div>
-  </main>
+  </div>
+</main>
 
   <footer>Créé par <b>Liam 👑</b></footer>
 </body>
