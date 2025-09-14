@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>FaceBird 🐦 - Accueil</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+      header { background: #2c7be5; color: white; padding: 15px; text-align: center; }
+      nav { background: #f0f0f0; padding: 10px; text-align: center; }
+      nav a { margin: 0 15px; text-decoration: none; color: #2c7be5; font-weight: bold; }
+      nav a:hover { text-decoration: underline; }
+      .content { max-width: 720px; margin: 30px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🐦 Bienvenue sur FaceBird</h1>
+      <p>La communauté des amoureux d’oiseaux</p>
+    </header>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="observations.html">Observations</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="profil.html">Profil</a>
+    </nav>
+    <div class="content">
+      <h2>📸 Exemple d’observation</h2>
+      <p><strong>Espèce :</strong> Pigeon ramier</p>
+      <p><strong>Description :</strong> Drôle de pigeon bien rond aujourd’hui 😂</p>
+    </div>
+    <footer style="text-align:center;margin:20px;color:#555">
+      Créé par <strong>Liam 👑</strong>
+    </footer>
+  </body>
+</html>
