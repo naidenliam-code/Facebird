@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Profil</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <header>
@@ -17,16 +18,44 @@
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a class="active" href="profil.html">Profil</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
   <main class="container">
+    <!-- Carte profil -->
     <div class="card center">
       <h2>Liam 👑 <span class="badge">Créateur</span></h2>
       <p class="muted">Ancienneté : 1 jour 🎉</p>
-      <p>Badges : 🐦 Nouveau membre • 🎓 Quiz niveau 1</p>
+      <p>Badges obtenus : voir ci-dessous</p>
+    </div>
+
+    <!-- Section badges -->
+    <div class="card">
+      <h3>🏆 Mes badges</h3>
+      <div id="badges-list"></div>
     </div>
   </main>
 
   <footer>Créé par <b>Liam 👑</b></footer>
+
+  <!-- Scripts -->
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const root = document.getElementById('badges-list');
+      if (!root || !window.FB_BADGES) return;
+      const all = FB_BADGES.all();
+      if (!all.length){
+        root.innerHTML = '<p class="muted">Aucun badge… ajoute une observation !</p>';
+        return;
+      }
+      const cat = FB_BADGES.catalog;
+      root.innerHTML = all.map(id => {
+        const b = cat[id]; if (!b) return '';
+        return `<span class="badge-pill">${b.icon} ${b.label}</span>`;
+      }).join('');
+    });
+  </script>
 </body>
 </html>
