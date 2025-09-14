@@ -1,25 +1,33 @@
 <!doctype html>
 <html lang="fr">
-<style>body{background:yellow !important}</style>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Accueil</title>
-  <!-- On relie le CSS externe -->
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
-  <h1>🐦 Bienvenue sur FaceBird</h1>
-  <p>La communauté des amoureux d’oiseaux.</p>
+  <header>
+    <h1>🐦 FaceBird</h1>
+    <p>La communauté des amoureux d’oiseaux</p>
+  </header>
 
-  <div class="card">
-    <h2>📸 Exemple d’observation</h2>
-    <p><strong>Espèce :</strong> Pigeon ramier</p>
-    <p><strong>Description :</strong> Drôle de pigeon bien rond aujourd’hui 😂</p>
-  </div>
+  <nav>
+    <a class="active" href="index.html">Accueil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+  </nav>
 
-  <footer style="text-align:center;margin:20px;color:#555">
-    Créé par <strong>Liam 👑</strong>
-  </footer>
+  <main class="container">
+    <div class="card center">
+      <h2>📸 Exemple d’observation</h2>
+      <p><span class="badge">Pigeon ramier</span></p>
+      <p>Drôle de pigeon bien rond aujourd’hui 😂</p>
+      <a class="btn" href="observations.html">Voir toutes les observations</a>
+    </div>
+  </main>
+
+  <footer>Créé par <b>Liam 👑</b></footer>
 </body>
 </html>
