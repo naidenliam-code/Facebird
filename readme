@@ -1,0 +1,32 @@
+# 🐦 FaceBird
+
+FaceBird est une application pour partager des observations d’oiseaux du monde entier : publier des photos, décrire l’espèce, liker et commenter, participer à des quiz, gagner des badges, et voir des events.
+
+## 🎯 Objectifs (roadmap)
+- **V1 (MVP)** : inscription/connexion, publier une observation (photo + espèce + lieu + description), like & commentaire.
+- **V2** : quiz (photo/son), premiers badges.
+- **V3** : classements, événements, géolocalisation vérifiée, avatars à débloquer.
+
+## 📱 Fonctionnalités clés
+- Profil avec pseudo, avatar (ou oiseaux prédéfinis), badges, ancienneté
+- Tri des publications (récentes / populaires / anciennes)
+- Sondages & posts officiels de l’équipe (⭐V) et du créateur (👑)
+
+## 🔐 Vie privée & charte (brouillons)
+- Politique de confidentialité simple
+- Charte de respect & protection des espèces
+
+## 🛠️ Tech (prévu)
+- Front : (à décider) — ex. HTML/CSS/JS ou React
+- Backend/DB : (à décider) — ex. Firebase
+- Hébergement démo : GitHub Pages
+
+## 📦 Démarrage (démo)
+Voir la section GitHub Pages ci-dessous dès qu’un `index.html` sera ajouté.
+
+## 🤝 Contribution
+Les idées sont bienvenues ! Ouvrez une *issue* ou répondez aux sondages “idées de features”.
+
+## 👑 Créateur
+Projet imaginé par **Liam**.
+
