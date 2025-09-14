@@ -22,7 +22,47 @@ nav a:hover, nav a.active{background:#dfe7fb}
 .badge{display:inline-block;background:#e8f0ff;color:#2458b5;border-radius:999px;
        padding:4px 10px;font-size:12px}
 .btn{display:inline-block;padding:9px 12px;border:1px solid #222;border-radius:12px;
-     text-decoration:none;color:#222}
+     text-decoration:none;color:#222}/* ===== Mode clair (par défaut) ===== */
+:root{
+  --blue:#2c7be5; --bg:#f7f9fc; --card:#ffffff; --text:#1f1f1f; --muted:#667085;
+  --nav:#e9eef7; --ring:rgba(44,123,229,.25);
+}
+
+/* Transitions douces */
+html, body, header, nav, .card { 
+  transition: background .2s ease, color .2s ease, border-color .2s ease; 
+}
+
+/* ===== Mode sombre ===== */
+.dark{
+  --blue:#1e40af;           /* bleu plus sombre pour le header */
+  --bg:#0f172a;             /* fond global (bleu nuit) */
+  --card:#111827;           /* cartes */
+  --text:#e5e7eb;           /* texte principal */
+  --muted:#9ca3af;          /* texte secondaire */
+  --nav:#0b1220;            /* bandeau des onglets */
+  --ring:rgba(99,102,241,.35);
+}
+
+.dark body{ background:var(--bg); color:var(--text); }
+.dark .card{ border-color:#1f2937; box-shadow:0 6px 22px rgba(0,0,0,.35); }
+.dark a, .dark nav a{ color:#90b4ff; }
+.dark nav a.active, .dark nav a:hover{ background:#132036; }
+.dark .muted{ color:var(--muted); }
+
+/* ===== Bouton de bascule thème ===== */
+.theme-toggle{
+  margin:8px 12px;
+  padding:6px 10px;
+  border:1px solid #222;
+  border-radius:10px;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+}
+.dark .theme-toggle{ border-color:#3b3f4a; }
+.theme-toggle:focus-visible{ outline:3px solid var(--ring); outline-offset:2px; }
+
 footer{text-align:center;color:var(--muted);margin:28px 0}
 /* Helpers */
 .center{text-align:center} .muted{color:var(--muted)}
