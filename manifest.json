@@ -1,0 +1,21 @@
+{
+  "name": "FaceBird",
+  "short_name": "FaceBird",
+  "description": "La communauté des amoureux d’oiseaux 🐦",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
