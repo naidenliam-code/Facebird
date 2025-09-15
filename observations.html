@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Observations</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=6">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2c7be5">
 </head>
 <body>
   <header>
@@ -28,13 +30,13 @@
       <form id="obs-form">
         <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
           <label>Espèce
-            <input name="espece" required placeholder="Mésange bleue" />
+            <input name="espece" required placeholder="Mésange bleue">
           </label>
           <label>Lieu / Contexte (badge)
-            <input name="lieu" placeholder="Jardin, Parc, Forêt…" />
+            <input name="lieu" placeholder="Jardin, Parc, Forêt…">
           </label>
           <label>Date
-            <input name="date" type="date" />
+            <input name="date" type="date">
           </label>
         </div>
         <label style="display:block;margin-top:10px">Description
@@ -74,5 +76,7 @@
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script src="observations.js" defer></script>
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
+ml>
