@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Accueil</title>
-  <link rel="stylesheet" href="style.css?v=3"><link rel="icon" href="favicon.svg" type="image/svg+xml">
-
-</head><script src="theme.js"></script>
-
+  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2c7be5">
+</head>
 <body>
   <header>
     <h1>🐦 FaceBird</h1>
@@ -15,21 +16,11 @@
   </header>
 
   <nav>
-    <nav>
-  <a class="active" href="index.html">Accueil</a>
-  <a href="observations.html">Observations</a>
-  <a href="quiz.html">Quiz</a>
-  <a href="profil.html">Profil</a>
-
-  <!-- Bouton bascule clair/sombre -->
-  <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">
-    🌙 Mode sombre
-  </button>
-</nav>
-<a class="active" href="index.html">Accueil</a>
+    <a class="active" href="index.html">Accueil</a>
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
   <main class="container">
@@ -42,5 +33,10 @@
   </main>
 
   <footer>Créé par <b>Liam 👑</b></footer>
+
+  <!-- Scripts -->
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
