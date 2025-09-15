@@ -1,0 +1,12 @@
+{
+  "name": "FaceBird",
+  "short_name": "FaceBird",
+  "start_url": "/Facebird/index.html",
+  "scope": "/Facebird/",
+  "display": "standalone",
+  "background_color": "#2c7be5",
+  "theme_color": "#2c7be5",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "64x64", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
