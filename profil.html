@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Profil</title>
-  <link rel="stylesheet" href="style.css?v=7">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2c7be5">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <header>
@@ -21,6 +22,7 @@
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a class="active" href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
@@ -39,28 +41,6 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- Scripts -->
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const root = document.getElementById('badges-list');
-      if (!root || !window.FB_BADGES) return;
-      const all = FB_BADGES.all();
-      if (!all.length){
-        root.innerHTML = '<p class="muted">Aucun badge… ajoute une observation !</p>';
-        return;
-      }
-      const cat = FB_BADGES.catalog;
-      root.innerHTML = all.map(id => {
-        const b = cat[id]; if (!b) return '';
-        return `<span class="badge-pill">${b.icon} ${b.label}</span>`;
-      }).join('');
-    });
-  </script>
-  <script src="sw-register.js" defer></script>
-</body>
-</html>  <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script>
@@ -83,4 +63,3 @@
   <script src="install-check.js" defer></script>
 </body>
 </html>
-
