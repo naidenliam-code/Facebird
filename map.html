@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FaceBird 🐦 - Carte des observations</title>
+  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2c7be5">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <style>
+    #map { height: 72vh; border-radius: 14px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌍 Carte des observations</h1>
+    <p>Visualise tes observations sur la carte</p>
+  </header>
+
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <a class="active" href="map.html">Carte</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
+  </nav>
+
+  <main class="container">
+    <div class="card">
+      <div id="map"></div>
+      <p class="muted" style="margin-top:8px">Astuce : sur “Observations”, clique “📍 Ajouter ma position” avant d’ajouter une observation.</p>
+    </div>
+  </main>
+
+  <footer>Créé par <b>Liam 👑</b></footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- init carte -->
+  <script>
+    const STORAGE_KEY = 'fb-observations-v1';
+    const loadObs = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const map = L.map('map');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      const obs = loadObs().filter(o => typeof o.lat === 'number' && typeof o.lng === 'number');
+      const markers = [];
+
+      obs.forEach(o => {
+        const m = L.marker([o.lat, o.lng]).addTo(map);
+        const esc = (s='') => String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        m.bindPopup(`<b>🐦 ${esc(o.espece)}</b><br><span class="badge">${esc(o.lieu||'Lieu')}</span> • ${esc(o.date)}<br>${esc(o.desc||'—')}`);
+        markers.push(m);
+      });
+
+      if (markers.length){
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+      } else {
+        map.setView([50.8503, 4.3517], 6); // Bruxelles par défaut
+      }
+    });
+  </script>
+
+  <!-- PWA -->
+  <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
+</body>
+</html>
