@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Observations</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -21,6 +21,7 @@
     <a class="active" href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
@@ -40,9 +41,18 @@
             <input name="date" type="date">
           </label>
         </div>
+
         <label style="display:block;margin-top:10px">Description
           <textarea name="desc" rows="3" placeholder="Comportement, météo, etc."></textarea>
         </label>
+
+        <!-- GPS -->
+        <div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;align-items:center">
+          <button id="geo-btn" class="btn" type="button">📍 Ajouter ma position</button>
+          <small id="geo-status" class="muted" style="margin-left:6px"></small>
+        </div>
+        <input type="hidden" name="lat">
+        <input type="hidden" name="lng">
 
         <div style="display:flex;gap:10px;margin:8px 0">
           <button class="btn" type="submit">Ajouter</button>
@@ -73,13 +83,6 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- Scripts -->
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="observations.js" defer></script>
-  <script src="sw-register.js" defer></script>
-</body>
-</html>
   <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
