@@ -1,21 +1,24 @@
 // FaceBird - gestion des badges (localStorage)
 (() => {
   const BKEY = 'fb-badges-v1';
-  const SKEY = 'fb-stats-v1'; // compteur d'observations
+  const SKEY = 'fb-stats-v1';
 
-  const CATALOG = {quiz_first:  { icon:'🎓', label:'Premier quiz' },
-quiz_80:     { icon:'🏅', label:'Expert du quiz (≥80%)' },
-quiz_perfect:{ icon:'🥳', label:'Score parfait (100%)' },
+  const CATALOG = {
+    // Observations
     first_obs: { icon:'🎉', label:'Première observation' },
     five_obs:  { icon:'🥇', label:'Explorateur (5 obs)' },
     owl_spot:  { icon:'🦉', label:'Guetteur de nuit (Hibou)' },
     mesange:   { icon:'🐦', label:'Petit chanteur (Mésange)' },
-    pigeon:    { icon:'🕊️', label:'Citadin (Pigeon)' }
+    pigeon:    { icon:'🕊️', label:'Citadin (Pigeon)' },
+    // Quiz
+    quiz_first:  { icon:'🎓', label:'Premier quiz' },
+    quiz_80:     { icon:'🏅', label:'Expert du quiz (≥80%)' },
+    quiz_perfect:{ icon:'🥳', label:'Score parfait (100%)' }
   };
 
   const loadBadges = () => { try { return JSON.parse(localStorage.getItem(BKEY)||'[]'); } catch { return []; } };
   const saveBadges = (list) => localStorage.setItem(BKEY, JSON.stringify(list));
-  const hasBadge = (id) => loadBadges().includes(id);
+  const hasBadge   = (id) => loadBadges().includes(id);
 
   function toast(msg){
     const t = document.createElement('div');
@@ -31,7 +34,6 @@ quiz_perfect:{ icon:'🥳', label:'Score parfait (100%)' },
     return true;
   }
 
-  // Stats simples
   const loadStats = () => { try { return JSON.parse(localStorage.getItem(SKEY)||'{"count":0}'); } catch { return {count:0}; } };
   const saveStats = (s) => localStorage.setItem(SKEY, JSON.stringify(s));
 
