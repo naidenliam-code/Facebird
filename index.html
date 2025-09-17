@@ -4,11 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Accueil</title>
-  <link rel="stylesheet" href="style.css?v=7">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Manifest + PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2c7be5">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <header>
@@ -21,6 +25,7 @@
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
@@ -33,17 +38,11 @@
     </div>
   </main>
 
-  <footer>Créé par <b>Liam 👑</b></footer>
+  <footer>
+    Créé par <b>Liam 👑</b>
+  </footer>
 
   <!-- Scripts -->
-    <!-- Scripts -->
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
-</body>
-</html>
-
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script src="sw-register.js" defer></script>
