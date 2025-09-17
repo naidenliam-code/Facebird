@@ -1,57 +1,43 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head><link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2c7be5">
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Accueil</title>
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Manifest + PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1976d2">
-
-  <!-- Icônes -->
+  <link rel="stylesheet" href="style.css?v=7">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2c7be5">
 </head>
 <body>
   <header>
     <h1>🐦 FaceBird</h1>
     <p>La communauté des amoureux d’oiseaux</p>
-    <nav>
-      <a class="active" href="index.html">Accueil</a>
-      <a href="observations.html">Observations</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="profil.html">Profil</a>
-    </nav>
-    <button id="toggle-dark">🌙 Mode sombre</button>
   </header>
 
-  <main>
-    <div class="card">
+  <nav>
+    <a class="active" href="index.html">Accueil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
+  </nav>
+
+  <main class="container">
+    <div class="card center">
       <h2>📸 Exemple d’observation</h2>
-      <span class="badge">Pigeon ramier</span>
+      <p><span class="badge">Pigeon ramier</span></p>
       <p>Drôle de pigeon bien rond aujourd’hui 😂</p>
-      <a href="observations.html" class="btn">Voir toutes les observations</a>
+      <a class="btn" href="observations.html">Voir toutes les observations</a>
     </div>
   </main>
 
-  <footer>
-    Créé par <strong>Liam 👑</strong>
-  </footer>
+  <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- JS -->
-  <script src="darkmode.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/Facebird/sw.js', { scope: '/Facebird/' })
-        .then(() => console.log('[FaceBird] SW enregistré'))
-        .catch(err => console.warn('[FaceBird] SW erreur', err));
-    }
-  </script>
+  <!-- Scripts -->
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
