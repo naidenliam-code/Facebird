@@ -60,4 +60,27 @@
   </script>
   <script src="sw-register.js" defer></script>
 </body>
+</html>  <!-- Scripts -->
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const root = document.getElementById('badges-list');
+      if (!root || !window.FB_BADGES) return;
+      const all = FB_BADGES.all();
+      if (!all.length){
+        root.innerHTML = '<p class="muted">Aucun badge… ajoute une observation !</p>';
+        return;
+      }
+      const cat = FB_BADGES.catalog;
+      root.innerHTML = all.map(id => {
+        const b = cat[id]; if (!b) return '';
+        return `<span class="badge-pill">${b.icon} ${b.label}</span>`;
+      }).join('');
+    });
+  </script>
+  <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
+</body>
 </html>
+
