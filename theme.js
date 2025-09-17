@@ -1,28 +1,18 @@
-// Applique le thème sauvé ou la préférence système au premier chargement
-(function () {
+(function(){
+  const BTN_ID = 'theme-toggle';
+  const KEY = 'fb-theme';
   const root = document.documentElement;
-  const saved = localStorage.getItem('fb-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-  if (saved === 'dark' || (!saved && prefersDark)) {
-    root.classList.add('dark');
-  }
+  function apply(t){ root.dataset.theme = t; const b=document.getElementById(BTN_ID); if(b){ b.textContent = t==='dark' ? '☀️ Mode clair' : '🌙 Mode sombre'; } }
+  function load(){ return localStorage.getItem(KEY) || 'light'; }
+  function save(t){ localStorage.setItem(KEY, t); }
 
-  function setButtonLabel(btn){
-    const dark = root.classList.contains('dark');
-    btn.textContent = dark ? '☀️ Mode clair' : '🌙 Mode sombre';
-    btn.setAttribute('aria-pressed', String(dark));
-  }
-
-  // Quand la page est prête, branche le bouton
-  window.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    setButtonLabel(btn);
-    btn.addEventListener('click', () => {
-      root.classList.toggle('dark');
-      localStorage.setItem('fb-theme', root.classList.contains('dark') ? 'dark' : 'light');
-      setButtonLabel(btn);
+  document.addEventListener('DOMContentLoaded', ()=>{
+    apply(load());
+    const btn = document.getElementById(BTN_ID);
+    btn?.addEventListener('click', ()=>{
+      const next = (load()==='dark') ? 'light' : 'dark';
+      save(next); apply(next);
     });
   });
 })();
