@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Carte des observations</title>
-  <link rel="stylesheet" href="style.css?v=8">
+
+  <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2c7be5">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <style>
-    #map { height: 72vh; border-radius: 14px; overflow: hidden; }
-  </style>
+  <style>#map { height: 72vh; border-radius: 14px; overflow: hidden; }</style>
 </head>
 <body>
   <header>
@@ -42,7 +42,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-  <!-- init carte -->
   <script>
     const STORAGE_KEY = 'fb-observations-v1';
     const loadObs = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } };
@@ -72,7 +71,7 @@
     });
   </script>
 
-  <!-- PWA -->
+  <script src="theme.js" defer></script>
   <script src="sw-register.js" defer></script>
   <script src="install-check.js" defer></script>
 </body>
