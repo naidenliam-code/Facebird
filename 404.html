@@ -1,44 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FaceBird 🐦 — 404</title>
-  <link rel="stylesheet" href="style.css?v=6">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2c7be5">
-  <style>
-    .big404{font-size:56px;margin:0}
-    .oops{font-size:18px;color:#667085;margin:.4rem 0 1rem}
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - FaceBird</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1976d2">
+  <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
   <header>
-    <h1>🐦 FaceBird</h1>
-    <p>La communauté des amoureux d’oiseaux</p>
+    <h1>404</h1>
+    <p>Oups… cet oiseau s’est envolé. La page demandée n’existe pas.</p>
+    <a href="index.html" class="btn">← Revenir à l’accueil</a>
   </header>
 
-  <nav>
-    <a href="index.html">Accueil</a>
-    <a href="observations.html">Observations</a>
-    <a href="quiz.html">Quiz</a>
-    <a href="profil.html">Profil</a>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
-  </nav>
+  <footer>
+    Créé par <strong>Liam 👑</strong>
+  </footer>
 
-  <main class="container">
-    <div class="card center">
-      <p class="big404">404</p>
-      <p class="oops">Oups… cet oiseau s’est envolé. La page demandée n’existe pas.</p>
-      <a class="btn" href="index.html">⬅ Revenir à l’accueil</a>
-    </div>
-  </main>
-
-  <footer>Créé par <b>Liam 👑</b></footer>
-
-  <!-- Scripts -->
-  <script src="theme.js" defer></script>
-  <script src="sw-register.js" defer></script>
+  <script src="darkmode.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/Facebird/sw.js', { scope: '/Facebird/' });
+    }
+  </script>
 </body>
 </html>
