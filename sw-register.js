@@ -1,8 +1,8 @@
-// Enregistre le SW si supporté
+// Enregistre le Service Worker pour le sous-chemin GitHub Pages
 (function(){
   if ('serviceWorker' in navigator) {
-    // IMPORTANT: le SW doit être à la racine du scope (/Facebird/)
-    navigator.serviceWorker.register('/Facebird/service-worker.js')
-      .catch(err => console.warn('[FaceBird] SW register error:', err));
+    navigator.serviceWorker.register('/Facebird/service-worker.js', { scope: '/Facebird/' })
+      .then(() => console.log('[FaceBird] SW enregistré'))
+      .catch(err => console.warn('[FaceBird] SW erreur:', err));
   }
 })();
