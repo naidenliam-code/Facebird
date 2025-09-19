@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FaceBird 🐦 - Fil d’actualité</title>
+
+  <!-- Styles + PWA -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2c7be5">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <style>
+    .post { display:flex; gap:12px; }
+    .avatar { font-size:28px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--card-bg-weak,#eef3ff); }
+    .post-body { flex:1 }
+    .post-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .post-actions { display:flex; gap:10px; margin-top:8px; }
+    .icon-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; background:var(--chip-bg,#eef2f7); cursor:pointer; border:none; }
+    .icon-btn[aria-pressed="true"]{ background:#ffdfe3; }
+    .comments { margin-top:8px; border-top:1px solid var(--hair,#e5e7eb); padding-top:8px; }
+    .comment { margin:6px 0; font-size:0.95rem }
+    .comment small { color:#667085 }
+    .comment-form { display:flex; gap:8px; margin-top:6px }
+    .comment-form input { flex:1 }
+    .empty { color:#667085; text-align:center; padding:20px 10px }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📰 Fil d’actualité</h1>
+    <p>Les dernières observations de FaceBird, triées par date</p>
+  </header>
+
+  <nav>
+    <a class="active" href="feed.html">Fil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
+    <a href="index.html">Accueil</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
+  </nav>
+
+  <main class="container">
+    <div id="feed" class="grid"></div>
+  </main>
+
+  <footer>Créé par <b>Liam 👑</b></footer>
+
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="feed.js" defer></script>
+  <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
+</body>
+</html>
