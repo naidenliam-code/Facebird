@@ -1,4 +1,4 @@
-// FaceBird - Quiz 15 questions + difficulté + meilleur score + badges
+// FaceBird - Quiz 15 questions + difficulté + meilleur score + badges + points
 (function(){
   const QKEY = 'fb-quiz-best';
   const $ = (sel) => document.querySelector(sel);
@@ -78,13 +78,25 @@
       <button class="btn" id="restart">↻ Rejouer</button>
     `;
     document.querySelector('#restart').addEventListener('click', start);
+
     if (window.FB_BADGES){
       FB_BADGES.award('quiz_first');
       if (pct >= 80) FB_BADGES.award('quiz_80');
       if (pct === 100) FB_BADGES.award('quiz_perfect');
     }
+    // points
+    if (pct >= 100) FB_POINTS?.add('quiz_100');
+    else if (pct >= 80) FB_POINTS?.add('quiz_80');
   }
 
-  function start(){ const picks = []; renderQuestion(0, picks); }
-  document.addEventListener('DOMContentLoaded', ()=>{ renderBest(); startBtn?.addEventListener('click', start); });
+  function start(){ 
+    const picks = []; 
+    renderQuestion(0, picks); 
+    FB_POINTS?.add('quiz_play');
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    renderBest();
+    startBtn?.addEventListener('click', start);
+  });
 })();
