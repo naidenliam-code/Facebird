@@ -1,7 +1,7 @@
-// FaceBird - Fil d'actualité (likes, commentaires, partage) - fonctionne avec fb-observations-v1
+// FaceBird - Fil d'actualité (likes, commentaires, partage) + points
 (function () {
   const KEY = 'fb-observations-v1';
-  const USERNAME = 'Liam'; // si plus tard tu gères des comptes, remplace par le pseudo courant
+  const USERNAME = 'Liam';
 
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (str = '') =>
@@ -11,8 +11,6 @@
     const s = espece.toLowerCase();
     if (s.includes('hibou') || s.includes('chouette')) return '🦉';
     if (s.includes('pigeon')) return '🕊️';
-    if (s.includes('mouette') || s.includes('goéland')) return '🕊️';
-    if (s.includes('cigogne')) return '🪶';
     if (s.includes('mesange') || s.includes('mésange')) return '🐦';
     return '🐦';
   };
@@ -20,7 +18,6 @@
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
   const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
 
-  // Ajoute un id/likes/comments si l’observation n’en a pas (migration douce)
   function normalize(list) {
     let changed = false;
     list.forEach(o => {
@@ -37,7 +34,7 @@
     const list = normalize(load()).sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
     if (!list.length) {
-      feed.innerHTML = `<div class="card empty">Aucune observation pour l’instant. Ajoute-en une depuis la page <a href="observations.html">Observations</a> !</div>`;
+      feed.innerHTML = `<div class="card empty">Aucune observation. Ajoute-en une depuis <a href="observations.html">Observations</a> !</div>`;
       return;
     }
 
@@ -84,7 +81,6 @@
       </div>
     `;
 
-    // Événements
     const likeBtn = $('.like-btn', card);
     likeBtn.addEventListener('click', () => toggleLike(o.id, likeBtn));
 
@@ -102,13 +98,13 @@
       const txt = input.value.trim();
       if (!txt) return;
       addComment(o.id, { author: USERNAME, text: txt, when: new Date().toLocaleString() });
-      // MAJ UI
       const lst = $('.cmt-list', cwrap);
       const div = document.createElement('div');
       div.className = 'comment';
       div.innerHTML = `<b>${esc(USERNAME)}</b> <small>${esc(new Date().toLocaleString())}</small><br>${esc(txt)}`;
       lst.appendChild(div);
       input.value = '';
+      FB_POINTS?.add('comment');
     });
 
     const shareBtn = $('.share-btn', card);
@@ -120,7 +116,6 @@
   function toggleLike(id, btn) {
     const list = load();
     const i = list.findIndex(x => x.id === id); if (i < 0) return;
-    // On mémorise "j'ai liké" par post via localStorage pour éviter de gonfler artificiellement
     const LKEY = 'fb-liked-' + id;
     const liked = localStorage.getItem(LKEY) === '1';
     if (liked) {
@@ -131,6 +126,7 @@
       list[i].likes = (list[i].likes || 0) + 1;
       localStorage.setItem(LKEY, '1');
       btn.setAttribute('aria-pressed', 'true');
+      FB_POINTS?.add('like', { onceId: id });
     }
     save(list);
     $('.lk', btn).textContent = list[i].likes;
@@ -147,11 +143,16 @@
   function sharePost(o) {
     const text = `🐦 ${o.espece || 'Observation'}${o.lieu ? ' • ' + o.lieu : ''} — ${o.desc || ''}`;
     const url = location.origin + location.pathname.replace(/feed\.html$/, 'index.html');
+    const done = () => FB_POINTS?.add('share');
+
     if (navigator.share) {
-      navigator.share({ title: 'FaceBird', text, url }).catch(()=>{});
+      navigator.share({ title: 'FaceBird', text, url })
+        .then(done)
+        .catch(()=>{});
     } else {
-      navigator.clipboard?.writeText(`${text}\n${url}`);
-      toast('Lien copié 📋');
+      navigator.clipboard?.writeText(`${text}\n${url}`).then(()=>{
+        toast('Lien copié 📋'); done();
+      });
     }
   }
 
