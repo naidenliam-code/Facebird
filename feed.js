@@ -1,4 +1,4 @@
-// FaceBird - Fil d'actualité (likes, commentaires, partage) + points
+// FaceBird - Fil d'actualité (likes, commentaires, partage) + avatar niveau
 (function () {
   const KEY = 'fb-observations-v1';
   const USERNAME = 'Liam';
@@ -7,7 +7,8 @@
   const esc = (str = '') =>
     String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 
-  const birdIcon = (espece = '') => {
+  // emoji d'espèce dans le titre (on garde cette info)
+  const speciesIcon = (espece = '') => {
     const s = espece.toLowerCase();
     if (s.includes('hibou') || s.includes('chouette')) return '🦉';
     if (s.includes('pigeon')) return '🕊️';
@@ -34,7 +35,7 @@
     const list = normalize(load()).sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
     if (!list.length) {
-      feed.innerHTML = `<div class="card empty">Aucune observation. Ajoute-en une depuis <a href="observations.html">Observations</a> !</div>`;
+      feed.innerHTML = `<div class="card empty">Aucune observation pour l’instant. Ajoute-en une depuis <a href="observations.html">Observations</a> !</div>`;
       return;
     }
 
@@ -46,15 +47,18 @@
     const card = document.createElement('div');
     card.className = 'card';
 
-    const icon = birdIcon(o.espece);
+    // avatar de niveau (global utilisateur)
+    const pts = FB_POINTS?.load() || 0;
+    const avatar = FB_POINTS?.getAvatar(pts) || '🐦';
+
     const hasGPS = typeof o.lat === 'number' && typeof o.lng === 'number';
 
     card.innerHTML = `
       <div class="post">
-        <div class="avatar">${icon}</div>
+        <div class="avatar" style="font-size:28px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--card-bg-weak,#eef3ff)">${avatar}</div>
         <div class="post-body">
           <div class="post-head">
-            <strong>${esc(o.espece || 'Observation')}</strong>
+            <strong>${speciesIcon(o.espece)} ${esc(o.espece || 'Observation')}</strong>
             ${o.lieu ? `<span class="badge">${esc(o.lieu)}</span>` : ''}
             ${hasGPS ? `<span class="badge">GPS ✔</span>` : ''}
             <small class="muted">• ${esc(o.date || '')}</small>
@@ -146,9 +150,7 @@
     const done = () => FB_POINTS?.add('share');
 
     if (navigator.share) {
-      navigator.share({ title: 'FaceBird', text, url })
-        .then(done)
-        .catch(()=>{});
+      navigator.share({ title: 'FaceBird', text, url }).then(done).catch(()=>{});
     } else {
       navigator.clipboard?.writeText(`${text}\n${url}`).then(()=>{
         toast('Lien copié 📋'); done();
