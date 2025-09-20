@@ -97,6 +97,20 @@
       case 'Expert':        return '🦉'; // hibou
       case 'Maître':        return '🦅'; // aigle
       default:              return '🐦';
+        // URL d'avatar selon le niveau (images locales)
+function getAvatarUrl(points){
+  const lvl = getLevel(points).current;
+  if (lvl === 'Débutant')      return 'avatar-debutant-256.png';
+  if (lvl === 'Intermédiaire') return 'avatar-intermediaire-256.png';
+  if (lvl === 'Avancé')        return 'avatar-avance-256.png';
+  if (lvl === 'Expert')        return 'avatar-expert-256.png';
+  if (lvl === 'Maître')        return 'avatar-maitre-256.png';
+  return 'avatar-debutant-256.png';
+}
+
+// expose aussi getAvatarUrl
+window.FB_POINTS = { add, load, getLevel, LEVELS, getAvatar, getAvatarUrl };
+
     }
   }
 
