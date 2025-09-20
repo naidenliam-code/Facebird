@@ -92,3 +92,12 @@ footer{text-align:center;color:var(--muted);margin:28px 0}
 .center{text-align:center} .muted{color:var(--muted)}
 img.resp{max-width:100%;height:auto;border-radius:12px}
 :focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+.toast{
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+  background: rgba(0,0,0,.85); color:#fff; padding:10px 14px; border-radius:10px;
+  font-size:.95rem; z-index:9999; animation: fb-pop .18s ease-out;
+}
+@keyframes fb-pop{
+  from { transform: translateX(-50%) translateY(6px); opacity:.2 }
+  to   { transform: translateX(-50%) translateY(0);  opacity:1 }
+}
