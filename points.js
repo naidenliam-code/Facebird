@@ -1,4 +1,4 @@
-// FaceBird — Points & Niveaux (localStorage)
+// FaceBird — Points & Niveaux (localStorage) + Avatar évolutif
 (() => {
   const PKEY = 'fb-points-v1';
   const HKEY = 'fb-points-history-v1';
@@ -38,7 +38,7 @@
       if (points >= LEVELS[i].min){ current = LEVELS[i]; next = LEVELS[i+1] || null; }
     }
     const base = current.min;
-    const cap  = next ? next.min : base + 200;
+    const cap  = next ? next.min : base + 200; // barre fixe pour le dernier niveau
     const progress = Math.max(0, Math.min(100, Math.round(((points - base)/(cap - base))*100)));
     return { current: current.name, next: next?.name || null, base, cap, progress };
   }
@@ -87,5 +87,18 @@
     return { added: delta, total: after, lvl: getLevel(after) };
   }
 
-  window.FB_POINTS = { add, load, getLevel, LEVELS };
+  // 🔥 Avatar selon le niveau
+  function getAvatar(points){
+    const lvl = getLevel(points);
+    switch (lvl.current){
+      case 'Débutant':      return '🐦'; // petit oiseau
+      case 'Intermédiaire': return '🐤'; // poussin
+      case 'Avancé':        return '🕊️'; // colombe
+      case 'Expert':        return '🦉'; // hibou
+      case 'Maître':        return '🦅'; // aigle
+      default:              return '🐦';
+    }
+  }
+
+  window.FB_POINTS = { add, load, getLevel, LEVELS, getAvatar };
 })();
