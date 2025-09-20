@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FaceBird 🐦 - Profil</title>
-
+  <title>FaceBird 🐦 - Mon profil</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2c7be5">
@@ -19,6 +18,7 @@
 
   <nav>
     <a href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a class="active" href="profil.html">Profil</a>
@@ -27,12 +27,27 @@
   </nav>
 
   <main class="container">
+    <!-- Carte principale : Avatar + Points + Niveau -->
     <div class="card center">
-      <h2>Liam 👑 <span class="badge">Créateur</span></h2>
-      <p class="muted">Ancienneté : 1 jour 🎉</p>
-      <p>Badges obtenus : voir ci-dessous</p>
+      <h2 id="profile-name">
+        <span id="profile-avatar" class="avatar" style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:var(--card-bg-weak,#eef3ff);margin-right:8px;font-size:26px">🐦</span>
+        Liam 👑 <span class="badge">Créateur</span>
+      </h2>
+      <p id="xp-line" class="muted">Ancienneté : 1 jour 🎉</p>
+
+      <div id="level-box" style="max-width:520px;margin:10px auto 0;text-align:left">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <strong id="level-name">Niveau —</strong>
+          <span id="points-total">0 pts</span>
+        </div>
+        <div style="height:10px;border-radius:999px;background:#e6eaf2;overflow:hidden">
+          <div id="level-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#2c7be5,#66b1ff)"></div>
+        </div>
+        <div id="level-next" class="muted" style="margin-top:6px;font-size:.9rem"></div>
+      </div>
     </div>
 
+    <!-- Tes badges existants -->
     <div class="card">
       <h3>🏆 Mes badges</h3>
       <div id="badges-list"></div>
@@ -41,22 +56,33 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
+  <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
+  <script src="points.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const root = document.getElementById('badges-list');
-      if (!root || !window.FB_BADGES) return;
-      const all = FB_BADGES.all();
-      if (!all.length){
-        root.innerHTML = '<p class="muted">Aucun badge… ajoute une observation !</p>';
-        return;
+      // Points & Niveaux
+      const pts = FB_POINTS?.load() || 0;
+      const lvl = FB_POINTS?.getLevel(pts);
+      document.getElementById('points-total').textContent = pts + ' pts';
+      document.getElementById('level-name').textContent  = 'Niveau ' + (lvl?.current || '—');
+      document.getElementById('level-bar').style.width   = (lvl?.progress || 0) + '%';
+      document.getElementById('level-next').textContent  =
+        lvl?.next ? `Prochain niveau : ${lvl.next} à ${lvl.cap} pts` : `Niveau max atteint — continue d’explorer !`;
+
+      // Avatar évolutif
+      document.getElementById('profile-avatar').textContent = FB_POINTS?.getAvatar(pts) || '🐦';
+
+      // (Optionnel) lister les badges si FB_BADGES est présent
+      if (window.FB_BADGES){
+        const root = document.getElementById('badges-list');
+        const all = FB_BADGES.all();
+        const cat = FB_BADGES.catalog;
+        root.innerHTML = all.length
+          ? all.map(id => `<span class="badge-pill">${cat[id]?.icon || '🏅'} ${cat[id]?.label || id}</span>`).join('')
+          : '<p class="muted">Aucun badge… ajoute une observation ou joue au quiz !</p>';
       }
-      const cat = FB_BADGES.catalog;
-      root.innerHTML = all.map(id => {
-        const b = cat[id]; if (!b) return '';
-        return `<span class="badge-pill">${b.icon} ${b.label}</span>`;
-      }).join('');
     });
   </script>
   <script src="sw-register.js" defer></script>
