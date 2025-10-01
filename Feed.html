@@ -5,19 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Fil d’actualité</title>
 
-  <!-- Styles + PWA -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2c7be5">
+  <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
+
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Fil d’actualité FaceBird : dernières observations, likes, commentaires et partage.">
 
   <style>
     .post { display:flex; gap:12px; }
-    .avatar { font-size:28px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--card-bg-weak,#eef3ff); }
+    .avatar { width:42px;height:42px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--card-bg-weak,#eef3ff) }
     .post-body { flex:1 }
     .post-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .post-actions { display:flex; gap:10px; margin-top:8px; }
+    .post-actions { display:flex; gap:10px; margin-top:8px; flex-wrap:wrap }
     .icon-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; background:var(--chip-bg,#eef2f7); cursor:pointer; border:none; }
     .icon-btn[aria-pressed="true"]{ background:#ffdfe3; }
     .comments { margin-top:8px; border-top:1px solid var(--hair,#e5e7eb); padding-top:8px; }
@@ -35,12 +38,12 @@
   </header>
 
   <nav>
+    <a href="index.html">Accueil</a>
     <a class="active" href="feed.html">Fil</a>
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
     <a href="map.html">Carte</a>
-    <a href="index.html">Accueil</a>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
   </nav>
 
@@ -50,9 +53,172 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
+  <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
-  <script src="feed.js" defer></script>
+  <script src="points.js" defer></script>
+
+  <!-- feed.js intégré -->
+  <script>
+  // FaceBird - Fil d'actualité (likes, commentaires, partage) + avatar niveau
+  (function () {
+    const KEY = 'fb-observations-v1';
+    const USERNAME = 'Liam';
+    const $ = (s, r = document) => r.querySelector(s);
+    const esc = (str = '') => String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    const speciesIcon = (espece = '') => {
+      const s = (espece||'').toLowerCase();
+      if (s.includes('hibou') || s.includes('chouette')) return '🦉';
+      if (s.includes('pigeon')) return '🕊️';
+      if (s.includes('mésange') || s.includes('mesange')) return '🐦';
+      return '🐦';
+    };
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+    function normalize(list) {
+      let changed = false;
+      list.forEach(o => {
+        if (!o.id) { o.id = 'o' + (o.ts || Date.now()) + Math.floor(Math.random() * 1000); changed = true; }
+        if (typeof o.likes !== 'number') { o.likes = 0; changed = true; }
+        if (!Array.isArray(o.comments)) { o.comments = []; changed = true; }
+      });
+      if (changed) save(list);
+      return list;
+    }
+
+    function renderFeed() {
+      const feed = $('#feed');
+      const list = normalize(load()).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      if (!list.length) {
+        feed.innerHTML = `<div class="card empty">Aucune observation pour l’instant. Ajoute-en une depuis <a href="observations.html">Observations</a> !</div>`;
+        return;
+      }
+      feed.innerHTML = '';
+      list.forEach(o => feed.appendChild(renderPost(o)));
+    }
+
+    function renderPost(o) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const pts = FB_POINTS?.load() || 0;
+      const avatarUrl = FB_POINTS?.getAvatarUrl?.(pts) || 'avatar-debutant-256.png';
+      const hasGPS = typeof o.lat === 'number' && typeof o.lng === 'number';
+
+      card.innerHTML = `
+        <div class="post">
+          <div class="avatar"><img src="${avatarUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover"/></div>
+          <div class="post-body">
+            <div class="post-head">
+              <strong>${speciesIcon(o.espece)} ${esc(o.espece || 'Observation')}</strong>
+              ${o.lieu ? `<span class="badge">${esc(o.lieu)}</span>` : ''}
+              ${hasGPS ? `<span class="badge">GPS ✔</span>` : ''}
+              <small class="muted">• ${esc(o.date || '')}</small>
+            </div>
+            <p style="margin:.4rem 0 0">${esc(o.desc || '—')}</p>
+
+            <div class="post-actions">
+              <button class="icon-btn like-btn" aria-pressed="false" data-id="${o.id}">❤️ <span class="lk">${o.likes}</span></button>
+              <button class="icon-btn cmt-toggle" data-id="${o.id}">💬 Commenter</button>
+              <button class="icon-btn share-btn" data-id="${o.id}">📤 Partager</button>
+              ${hasGPS ? `<a class="icon-btn" href="map.html" title="Voir sur la carte">🗺️ Carte</a>` : ''}
+            </div>
+
+            <div class="comments" data-id="${o.id}" hidden>
+              <div class="cmt-list">
+                ${o.comments.map(c => `<div class="comment"><b>${esc(c.author)}</b> <small>${esc(c.when)}</small><br>${esc(c.text)}</div>`).join('')}
+              </div>
+              <form class="comment-form" data-id="${o.id}">
+                <input type="text" required maxlength="280" placeholder="Ajouter un commentaire…">
+                <button class="btn" type="submit">Envoyer</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const likeBtn = card.querySelector('.like-btn');
+      likeBtn.addEventListener('click', () => toggleLike(o.id, likeBtn));
+
+      const toggle = card.querySelector('.cmt-toggle');
+      const cwrap = card.querySelector('.comments');
+      toggle.addEventListener('click', () => {
+        cwrap.hidden = !cwrap.hidden;
+        if (!cwrap.hidden) cwrap.querySelector('input')?.focus();
+      });
+
+      const form = card.querySelector('.comment-form');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = form.querySelector('input');
+        const txt = input.value.trim();
+        if (!txt) return;
+        addComment(o.id, { author: USERNAME, text: txt, when: new Date().toLocaleString() });
+        const lst = cwrap.querySelector('.cmt-list');
+        const div = document.createElement('div');
+        div.className = 'comment';
+        div.innerHTML = `<b>${esc(USERNAME)}</b> <small>${esc(new Date().toLocaleString())}</small><br>${esc(txt)}`;
+        lst.appendChild(div);
+        input.value = '';
+        FB_POINTS?.add('comment');
+      });
+
+      const shareBtn = card.querySelector('.share-btn');
+      shareBtn.addEventListener('click', () => sharePost(o));
+
+      return card;
+    }
+
+    function toggleLike(id, btn) {
+      const list = load();
+      const i = list.findIndex(x => x.id === id); if (i < 0) return;
+      const LKEY = 'fb-liked-' + id;
+      const liked = localStorage.getItem(LKEY) === '1';
+      if (liked) {
+        list[i].likes = Math.max(0, (list[i].likes || 0) - 1);
+        localStorage.removeItem(LKEY);
+        btn.setAttribute('aria-pressed', 'false');
+      } else {
+        list[i].likes = (list[i].likes || 0) + 1;
+        localStorage.setItem(LKEY, '1');
+        btn.setAttribute('aria-pressed', 'true');
+        FB_POINTS?.add('like', { onceId: id });
+      }
+      save(list);
+      btn.querySelector('.lk').textContent = list[i].likes;
+    }
+
+    function addComment(id, cmt) {
+      const list = load();
+      const i = list.findIndex(x => x.id === id); if (i < 0) return;
+      list[i].comments = list[i].comments || [];
+      list[i].comments.push(cmt);
+      save(list);
+    }
+
+    function sharePost(o) {
+      const text = `🐦 ${o.espece || 'Observation'}${o.lieu ? ' • ' + o.lieu : ''} — ${o.desc || ''}`;
+      const url = location.origin + location.pathname.replace(/feed\.html$/, 'index.html');
+      const done = () => FB_POINTS?.add('share');
+
+      if (navigator.share) {
+        navigator.share({ title: 'FaceBird', text, url }).then(done).catch(()=>{});
+      } else {
+        navigator.clipboard?.writeText(`${text}\n${url}`).then(()=>{ toast('Lien copié 📋'); done(); });
+      }
+    }
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast'; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }
+
+    document.addEventListener('DOMContentLoaded', renderFeed);
+  })();
+  </script>
+
+  <!-- PWA -->
   <script src="sw-register.js" defer></script>
   <script src="install-check.js" defer></script>
 </body>
