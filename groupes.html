@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FaceBird 🐦 - Groupes d’observation</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PWA / Manifest -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1e73e8">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Crée ou rejoins des groupes d’observation FaceBird, discute et partage tes observations.">
+
+  <style>
+    .layout { display:grid; grid-template-columns: 280px 1fr; gap:14px; }
+    .groups-list { max-height: 65vh; overflow:auto }
+    .group-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:12px; background:var(--chip-bg,#eef2f7); margin:6px 0 }
+    .group-item.active { background: #dfe9ff; }
+    .group-actions { display:flex; gap:8px; flex-wrap:wrap }
+    .feed-item { border-top:1px solid var(--hair,#e5e7eb); padding:10px 0; }
+    .feed-item:first-child { border-top:none; }
+    .msg-list { max-height: 220px; overflow:auto; background:var(--card-bg-weak,#f5f7fb); padding:8px; border-radius:12px; }
+    .msg-bubble { background:#fff; border-radius:12px; padding:8px 10px; margin:6px 0; }
+    .msg-meta { font-size:.85rem; color:#667085 }
+    .row { display:flex; gap:8px }
+    .row > * { flex:1 }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>👥 Groupes d’observation</h1>
+    <p>Rejoins des groupes, discute et partage tes observations</p>
+  </header>
+
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
+    <a class="active" href="groupes.html">Groupes</a>
+    <a href="messages.html">Messages</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
+  </nav>
+
+  <main class="container layout">
+    <!-- Colonne gauche : mes groupes + créer / rejoindre -->
+    <div class="card">
+      <h3>Mes groupes</h3>
+      <div id="groups" class="groups-list"></div>
+
+      <hr>
+
+      <h3>Créer un groupe</h3>
+      <form id="create-form" class="row">
+        <input name="name" required placeholder="Nom du groupe">
+        <input name="desc" placeholder="Description (optionnel)">
+        <button class="btn" type="submit">Créer</button>
+      </form>
+
+      <h3 style="margin-top:12px">Rejoindre un groupe</h3>
+      <form id="join-form" class="row">
+        <input name="id" required placeholder="ID du groupe (code)">
+        <button class="btn" type="submit">Rejoindre</button>
+      </form>
+    </div>
+
+    <!-- Colonne droite : contenu du groupe sélectionné -->
+    <div class="card" id="group-panel" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div>
+          <h2 id="g-title">Groupe</h2>
+          <p class="muted" id="g-desc"></p>
+          <p class="muted"><b>Membres :</b> <span id="g-members">—</span></p>
+          <p class="muted"><b>ID :</b> <span id="g-id">—</span></p>
+        </div>
+        <div class="group-actions">
+          <button class="btn" id="leave-btn" type="button">Quitter le groupe</button>
+        </div>
+      </div>
+
+      <hr>
+
+      <h3>Partage d’observation</h3>
+      <div class="row">
+        <select id="obs-select"></select>
+        <button class="btn" id="share-obs">Partager</button>
+      </div>
+
+      <h3 style="margin-top:12px">Fil du groupe</h3>
+      <div id="g-feed"></div>
+
+      <h3 style="margin-top:12px">Discussion</h3>
+      <div class="msg-list" id="g-chat"></div>
+      <form id="chat-form" class="row" style="margin-top:8px">
+        <input id="chat-input" placeholder="Écrire un message…">
+        <button class="btn" type="submit">Envoyer</button>
+      </form>
+    </div>
+
+    <div class="card" id="group-empty">
+      <p class="muted">Aucun groupe sélectionné. Choisis un groupe à gauche ou crée-en un.</p>
+    </div>
+  </main>
+
+  <footer>Créé par <b>Liam 👑</b></footer>
+
+  <!-- Scripts -->
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="points.js" defer></script>
+
+  <script>
+  (function(){
+    const USER = 'Liam';
+    const GKEY = 'fb-groups-v1';
+    const OKEY = 'fb-observations-v1';
+
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
+
+    const loadGroups = () => { try { return JSON.parse(localStorage.getItem(GKEY)||'[]'); } catch { return []; } };
+    const saveGroups = (arr) => localStorage.setItem(GKEY, JSON.stringify(arr));
+    const loadObs = () => { try { return JSON.parse(localStorage.getItem(OKEY)||'[]'); } catch { return []; } };
+
+    let groups = loadGroups();
+    let current = null; // group id
+
+    function renderList(){
+      const root = $('#groups');
+      if (!groups.length){
+        root.innerHTML = `<p class="muted">Tu n’es membre d’aucun groupe. Crée ou rejoins-en un 👇</p>`;
+        return;
+      }
+      root.innerHTML = '';
+      groups
+        .filter(g => g.members?.includes(USER))
+        .forEach(g => {
+          const div = document.createElement('div');
+          div.className = 'group-item' + (current===g.id ? ' active' : '');
+          div.innerHTML = `<span><b>${esc(g.name)}</b><br><small class="muted">${esc(g.desc || '')}</small></span>
+                           <button class="btn btn-small" data-id="${g.id}">Ouvrir</button>`;
+          div.querySelector('button').addEventListener('click', ()=> openGroup(g.id));
+          root.appendChild(div);
+        });
+      if (!$('#groups').children.length){
+        root.innerHTML = `<p class="muted">Tu n’es membre d’aucun groupe. Crée ou rejoins-en un 👇</p>`;
+      }
+    }
+
+    function openGroup(id){
+      current = id;
+      const g = groups.find(x=>x.id===id);
+      if (!g) return;
+
+      $('#group-panel').style.display = 'block';
+      $('#group-empty').style.display = 'none';
+
+      $('#g-title').textContent = g.name;
+      $('#g-desc').textContent = g.desc || '';
+      $('#g-id').textContent = g.id;
+      $('#g-members').textContent = (g.members||[]).join(', ') || '—';
+      $('#leave-btn').onclick = ()=>{
+        if (!confirm('Quitter ce groupe ?')) return;
+        g.members = (g.members||[]).filter(m => m!==USER);
+        saveGroups(groups);
+        current = null; renderList();
+        $('#group-panel').style.display = 'none';
+        $('#group-empty').style.display = 'block';
+      };
+
+      // observations partageables (les tiennes locales)
+      const sel = $('#obs-select');
+      const obs = loadObs();
+      sel.innerHTML = obs.length ? obs.map(o => `<option value="${esc(o.id)}">${esc(o.espece || 'Observation')} • ${esc(o.lieu||'')}</option>`).join('') : `<option value="">(Aucune observation locale)</option>`;
+
+      $('#share-obs').onclick = ()=>{
+        const id = sel.value;
+        const found = obs.find(o=>String(o.id)===String(id));
+        if (!found){ alert('Aucune observation sélectionnée'); return; }
+        g.feed = g.feed || [];
+        g.feed.unshift({ type:'obs', by: USER, at: Date.now(), obs: found });
+        saveGroups(groups);
+        renderFeed(g); FB_POINTS?.add('share'); // petit point pour partager
+      };
+
+      renderFeed(g);
+      renderChat(g);
+      renderList();
+    }
+
+    function renderFeed(g){
+      const root = $('#g-feed');
+      const feed = (g.feed||[]);
+      if (!feed.length){
+        root.innerHTML = `<p class="muted">Aucun partage encore.</p>`;
+        return;
+      }
+      root.innerHTML = feed.map(item => {
+        if (item.type==='obs'){
+          const o = item.obs || {};
+          const hasGPS = typeof o.lat==='number' && typeof o.lng==='number';
+          return `<div class="feed-item">
+            <div class="msg-meta">Partagé par <b>${esc(item.by)}</b> — ${new Date(item.at).toLocaleString()}</div>
+            <p><b>🐦 ${esc(o.espece||'Observation')}</b> ${o.lieu?`<span class="badge">${esc(o.lieu)}</span>`:''} ${hasGPS?`<span class="badge">GPS ✔</span>`:''} • <small>${esc(o.date||'')}</small></p>
+            ${o.photo ? `<img src="${o.photo}" alt="photo" style="max-width:100%;border-radius:10px;margin:6px 0">` : ''}
+            <p>${esc(o.desc||'—')}</p>
+          </div>`;
+        }
+        return '';
+      }).join('');
+    }
+
+    function renderChat(g){
+      const list = $('#g-chat');
+      list.innerHTML = (g.chat||[]).map(m => `
+        <div class="msg-bubble">
+          <div class="msg-meta"><b>${esc(m.by)}</b> — ${new Date(m.at).toLocaleString()}</div>
+          <div>${esc(m.text)}</div>
+        </div>
+      `).join('');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    // créer groupe
+    $('#create-form')?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = e.target.name.value.trim();
+      const desc = e.target.desc.value.trim();
+      if (!name) return;
+      const id = 'g' + Date.now().toString(36).slice(-6);
+      groups.push({ id, name, desc, owner: USER, members: [USER], feed: [], chat: [] });
+      saveGroups(groups);
+      e.target.reset();
+      renderList(); openGroup(id);
+      FB_POINTS?.add('share'); // petit bonus à la création
+      alert(`Groupe créé ! ID à partager : ${id}`);
+    });
+
+    // rejoindre groupe par ID
+    $('#join-form')?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const id = e.target.id.value.trim();
+      if (!id) return;
+      const g = groups.find(x=>x.id===id);
+      if (!g){
+        if (!confirm("Ce groupe n'existe pas en local. Le créer ?")) return;
+        groups.push({ id, name: 'Groupe ' + id, desc:'', owner: USER, members:[USER], feed:[], chat:[] });
+      } else {
+        if (!g.members.includes(USER)) g.members.push(USER);
+      }
+      saveGroups(groups);
+      e.target.reset();
+      renderList(); openGroup(id);
+    });
+
+    // chat
+    $('#chat-form')?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const text = $('#chat-input').value.trim();
+      if (!text || !current) return;
+      const g = groups.find(x=>x.id===current); if (!g) return;
+      g.chat = g.chat || [];
+      g.chat.push({ by: USER, text, at: Date.now() });
+      saveGroups(groups);
+      $('#chat-input').value = '';
+      renderChat(g);
+    });
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      groups = loadGroups();
+      renderList();
+    });
+  })();
+  </script>
+
+  <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
+</body>
+</html>
