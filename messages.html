@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FaceBird 🐦 - Messages</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PWA / Manifest -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1e73e8">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Messages privés FaceBird (local, offline).">
+
+  <style>
+    .msg-layout { display:grid; grid-template-columns: 260px 1fr; gap:14px; }
+    .conv-list { max-height: 70vh; overflow:auto }
+    .conv-item { padding:10px; border-radius:12px; background:var(--chip-bg,#eef2f7); margin:6px 0; cursor:pointer }
+    .conv-item.active { background:#dfe9ff; }
+    .dm-panel { display:flex; flex-direction:column; gap:10px }
+    .dm-messages { flex:1; max-height: 60vh; overflow:auto; background:var(--card-bg-weak,#f5f7fb); border-radius:12px; padding:10px }
+    .bubble { background:#fff; padding:8px 10px; border-radius:12px; margin:6px 0; max-width: 80% }
+    .bubble.me { background:#e7f0ff; margin-left:auto }
+    .meta { font-size:.85rem; color:#667085 }
+    .row { display:flex; gap:8px }
+    .row > * { flex:1 }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✉️ Messages privés</h1>
+    <p>Discute en tête-à-tête (stocké en local, hors-ligne OK)</p>
+  </header>
+
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <a href="map.html">Carte</a>
+    <a href="groupes.html">Groupes</a>
+    <a class="active" href="messages.html">Messages</a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
+  </nav>
+
+  <main class="container msg-layout">
+    <div class="card">
+      <h3>Conversations</h3>
+      <div id="conv-list" class="conv-list"></div>
+
+      <hr>
+      <h3>Nouvelle conversation</h3>
+      <form id="new-conv" class="row">
+        <input name="with" required placeholder="Pseudo du contact">
+        <button class="btn" type="submit">Créer</button>
+      </form>
+    </div>
+
+    <div class="card dm-panel" id="dm-panel" style="display:none">
+      <div>
+        <h2 id="dm-with">—</h2>
+        <p class="muted" style="margin:.2rem 0">Messages stockés sur ton appareil. Ne partage pas d’informations personnelles.</p>
+      </div>
+
+      <div id="dm-messages" class="dm-messages"></div>
+
+      <form id="send-form" class="row">
+        <input id="dm-input" placeholder="Écrire un message…">
+        <button class="btn" type="submit">Envoyer</button>
+      </form>
+    </div>
+
+    <div class="card" id="dm-empty">
+      <p class="muted">Aucune conversation sélectionnée. Choisis un contact à gauche ou crée une nouvelle conversation.</p>
+    </div>
+  </main>
+
+  <footer>Créé par <b>Liam 👑</b></footer>
+
+  <script src="theme.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="points.js" defer></script>
+
+  <script>
+  (function(){
+    const USER = 'Liam';
+    const MKEY = 'fb-dm-v1';
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
+
+    const load = () => { try { return JSON.parse(localStorage.getItem(MKEY)||'[]'); } catch { return []; } };
+    const save = (arr) => localStorage.setItem(MKEY, JSON.stringify(arr));
+
+    let convs = load();
+    let current = null; // index
+
+    function renderList(){
+      const root = $('#conv-list');
+      if (!convs.length){ root.innerHTML = `<p class="muted">Aucune conversation. Crée-en une 👇</p>`; return; }
+      root.innerHTML = '';
+      convs.forEach((c, i) => {
+        const last = c.messages?.[c.messages.length-1];
+        const div = document.createElement('div');
+        div.className = 'conv-item' + (current===i ? ' active':'');
+        div.innerHTML = `<b>${esc(c.with)}</b><br><small class="muted">${last ? esc(last.text).slice(0,40)+'…' : '—'}</small>`;
+        div.addEventListener('click', ()=> open(i));
+        root.appendChild(div);
+      });
+    }
+
+    function open(i){
+      current = i;
+      const c = convs[i];
+      $('#dm-panel').style.display = 'flex';
+      $('#dm-empty').style.display = 'none';
+      $('#dm-with').textContent = c.with;
+      renderMessages(c);
+    }
+
+    function renderMessages(c){
+      const box = $('#dm-messages');
+      box.innerHTML = (c.messages||[]).map(m => `
+        <div class="bubble ${m.from===USER?'me':''}">
+          <div class="meta"><b>${esc(m.from)}</b> — ${new Date(m.at).toLocaleString()}</div>
+          <div>${esc(m.text)}</div>
+        </div>
+      `).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    $('#new-conv')?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const who = e.target.with.value.trim();
+      if (!who) return;
+      const exist = convs.findIndex(x=>x.with.toLowerCase()===who.toLowerCase());
+      if (exist >= 0){ open(exist); return; }
+      convs.push({ with: who, messages: [] });
+      save(convs);
+      e.target.reset();
+      renderList();
+      open(convs.length-1);
+    });
+
+    $('#send-form')?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const input = $('#dm-input');
+      const text = input.value.trim();
+      if (!text || current===null) return;
+      const c = convs[current];
+      c.messages = c.messages || [];
+      c.messages.push({ from: USER, text, at: Date.now() });
+      save(convs);
+      input.value = '';
+      renderMessages(c);
+    });
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      convs = load();
+      renderList();
+    });
+  })();
+  </script>
+
+  <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
+</body>
+</html>
