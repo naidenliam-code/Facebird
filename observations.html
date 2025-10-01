@@ -8,11 +8,14 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Manifest + PWA -->
+  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2c7be5">
+  <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Ajoute tes observations d’oiseaux (avec position GPS) et gagne des points.">
 </head>
 <body>
   <header>
@@ -22,6 +25,7 @@
 
   <nav>
     <a href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
     <a class="active" href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
@@ -52,11 +56,11 @@
 
         <!-- GPS -->
         <div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;align-items:center">
-          <button id="geo-btn" class="btn" type="button">📍 Ajouter ma position</button>
+          <button id="obs-gps-btn" class="btn" type="button">📍 Ajouter ma position</button>
           <small id="geo-status" class="muted" style="margin-left:6px"></small>
         </div>
-        <input type="hidden" name="lat">
-        <input type="hidden" name="lng">
+        <input id="obs-lat" type="hidden" name="lat">
+        <input id="obs-lng" type="hidden" name="lng">
 
         <div style="display:flex;gap:10px;margin:8px 0">
           <button class="btn" type="submit">Ajouter</button>
@@ -65,32 +69,155 @@
       </form>
     </div>
 
-    <!-- Grille d’observations -->
-    <div id="obs-grid" class="grid">
-      <div class="card">
-        <h3>🐦 Mésange bleue</h3>
-        <p><span class="badge">Jardin</span> • Aujourd’hui</p>
-        <p>Petite boule d’énergie, très active ce matin.</p>
-      </div>
-      <div class="card">
-        <h3>🕊️ Pigeon ramier</h3>
-        <p><span class="badge">Parc</span> • Hier</p>
-        <p>Très rond et relax sous un arbre 😂</p>
-      </div>
-      <div class="card">
-        <h3>🦉 Hibou (rare)</h3>
-        <p><span class="badge">Nuit</span> • Vérifié GPS</p>
-        <p>Observation validée → avatar à débloquer !</p>
-      </div>
-    </div>
+    <!-- Liste d’observations (aperçu) -->
+    <div id="obs-list" class="grid"></div>
   </main>
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- Scripts -->
+  <!-- Scripts (ordre conseillé) -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
-  <script src="observations.js" defer></script>
+  <script src="points.js" defer></script>
+
+  <!-- Observations (complet avec points + GPS) -->
+  <script>
+  // FaceBird - Observations : ajout + GPS + persistance + hooks points
+  (function(){
+    const KEY = 'fb-observations-v1';
+    const form = document.querySelector('#obs-form');
+    const listEl = document.querySelector('#obs-list');
+    const gpsBtn = document.querySelector('#obs-gps-btn');
+    const latInput = document.querySelector('#obs-lat');
+    const lngInput = document.querySelector('#obs-lng');
+    const clearBtn = document.querySelector('#clear-obs');
+    const geoStatus = document.getElementById('geo-status');
+
+    const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+
+    function normalize(arr){
+      let changed = false;
+      arr.forEach(o=>{
+        if (!o.id){ o.id = 'o' + (o.ts || Date.now()) + Math.floor(Math.random()*1000); changed = true; }
+        if (typeof o.likes !== 'number'){ o.likes = 0; changed = true; }
+        if (!Array.isArray(o.comments)){ o.comments = []; changed = true; }
+      });
+      if (changed) save(arr);
+      return arr;
+    }
+
+    function render(){
+      if (!listEl) return;
+      const arr = normalize(load()).sort((a,b)=> (b.ts||0)-(a.ts||0));
+      if (!arr.length){
+        listEl.innerHTML = `<div class="card empty">Aucune observation encore. Ajoute ta première avec le formulaire ci-dessus !</div>`;
+        return;
+      }
+      listEl.innerHTML = arr.map(o => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div>
+              <strong>${esc(o.espece)}</strong>
+              ${o.lieu ? `<span class="badge">${esc(o.lieu)}</span>`:''}
+              ${typeof o.lat==='number' && typeof o.lng==='number' ? `<span class="badge">GPS ✔</span>`:''}
+              <small class="muted">• ${esc(o.date || '')}</small>
+            </div>
+            <small class="muted">${new Date(o.ts||Date.now()).toLocaleString()}</small>
+          </div>
+          <p style="margin:.4rem 0 0">${esc(o.desc || '—')}</p>
+          <div class="muted" style="margin-top:6px">${o.likes||0} like(s) • ${o.comments?.length||0} commentaire(s)</div>
+        </div>
+      `).join('');
+    }
+
+    function addObservation(data){
+      const arr = load();
+      arr.unshift({
+        id: 'o' + Date.now() + Math.floor(Math.random()*1000),
+        ts: Date.now(),
+        espece: data.espece.trim(),
+        lieu: (data.lieu||'').trim(),
+        date: (data.date||'').trim(),
+        desc: (data.desc||'').trim(),
+        lat: data.lat != null ? Number(data.lat) : undefined,
+        lng: data.lng != null ? Number(data.lng) : undefined,
+        likes: 0,
+        comments: []
+      });
+      save(arr);
+    }
+
+    // date par défaut aujourd’hui
+    document.addEventListener('DOMContentLoaded', ()=>{
+      if (form?.date && !form.date.value){
+        form.date.value = new Date().toISOString().slice(0,10);
+      }
+      render();
+    });
+
+    form?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const d = {
+        espece: form.espece.value,
+        lieu: form.lieu.value,
+        date: form.date.value,
+        desc: form.desc.value,
+        lat: latInput?.value ? Number(latInput.value) : undefined,
+        lng: lngInput?.value ? Number(lngInput.value) : undefined
+      };
+      if (!d.espece.trim()){
+        alert("Indique au moins l'espèce ✍️"); return;
+      }
+      addObservation(d);
+      if (window.FB_BADGES){
+        FB_BADGES.incCount();
+        const sp = (d.espece||'').toLowerCase();
+        if (sp.includes('hibou')) FB_BADGES.award('owl_spot');
+        if (sp.includes('mésange') || sp.includes('mesange')) FB_BADGES.award('mesange');
+        if (sp.includes('pigeon')) FB_BADGES.award('pigeon');
+      }
+      // ➕ points
+      FB_POINTS?.add('observation');
+
+      form.reset();
+      if (form?.date) form.date.value = new Date().toISOString().slice(0,10);
+      if (latInput) latInput.value = '';
+      if (lngInput) lngInput.value = '';
+      if (geoStatus) geoStatus.textContent = '';
+      render();
+    });
+
+    gpsBtn?.addEventListener('click', ()=>{
+      if (!navigator.geolocation){
+        alert("La géolocalisation n'est pas disponible.");
+        return;
+      }
+      geoStatus.textContent = "Recherche de la position…";
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const { latitude, longitude } = pos.coords;
+        if (latInput) latInput.value = String(latitude);
+        if (lngInput) lngInput.value = String(longitude);
+        geoStatus.textContent = `Position ajoutée ✔ (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+        // ➕ points GPS
+        FB_POINTS?.add('gps_used');
+      }, err=>{
+        console.warn(err);
+        geoStatus.textContent = "Impossible d’obtenir la position ❌";
+      }, { enableHighAccuracy:true, timeout: 10000, maximumAge: 0 });
+    });
+
+    clearBtn?.addEventListener('click', ()=>{
+      if (!confirm("Effacer toutes tes observations locales ?")) return;
+      localStorage.removeItem(KEY);
+      render();
+    });
+  })();
+  </script>
+
+  <!-- PWA -->
   <script src="sw-register.js" defer></script>
   <script src="install-check.js" defer></script>
 </body>
