@@ -8,11 +8,14 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Manifest + PWA -->
+  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2c7be5">
+  <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="FaceBird — la communauté des amoureux d’oiseaux : observations, quiz, carte, profil et badges.">
 </head>
 <body>
   <header>
@@ -22,6 +25,7 @@
 
   <nav>
     <a class="active" href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
     <a href="observations.html">Observations</a>
     <a href="quiz.html">Quiz</a>
     <a href="profil.html">Profil</a>
@@ -31,10 +35,29 @@
 
   <main class="container">
     <div class="card center">
-      <h2>📸 Exemple d’observation</h2>
-      <p><span class="badge">Pigeon ramier</span></p>
-      <p>Drôle de pigeon bien rond aujourd’hui 😂</p>
-      <a class="btn" href="observations.html">Voir toutes les observations</a>
+      <h2>Bienvenue sur FaceBird</h2>
+      <p>Poste tes observations d’oiseaux, gagne des points 🧭, débloque des avatars 🦉 et explore la carte 🌍.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+        <a class="btn" href="observations.html">➕ Nouvelle observation</a>
+        <a class="btn" href="feed.html">📰 Voir le fil</a>
+        <a class="btn" href="quiz.html">🎯 Lancer un quiz</a>
+        <a class="btn" href="map.html">🗺️ Carte</a>
+      </div>
+    </div>
+
+    <!-- Aperçu rapide : dernières observations (si présentes en local) -->
+    <div class="card">
+      <h3>Dernières observations</h3>
+      <div id="home-latest" class="grid"></div>
+      <p class="muted" id="home-empty" style="display:none">Aucune observation pour l’instant. Commence sur la page <a href="observations.html">Observations</a> !</p>
+    </div>
+
+    <!-- Astuce installation PWA -->
+    <div class="card">
+      <h3>📲 Installer FaceBird</h3>
+      <p>Installe FaceBird comme une vraie app (icône sur l’écran d’accueil) pour un accès plus rapide et le mode hors-ligne.</p>
+      <button id="pwa-install" class="btn" type="button" style="display:none">⬇️ Installer FaceBird</button>
+      <p class="muted" id="pwa-installed" style="display:none">FaceBird est déjà installée ✅</p>
     </div>
   </main>
 
@@ -42,9 +65,74 @@
     Créé par <b>Liam 👑</b>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Scripts communs (ordre conseillé) -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
+  <script src="points.js" defer></script>
+
+  <!-- Mini-script d'accueil : charge 3 dernières obs + bouton installer -->
+  <script>
+    // Charge 3 dernières observations
+    document.addEventListener('DOMContentLoaded', () => {
+      const KEY = 'fb-observations-v1';
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
+      list = (list || []).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,3);
+
+      const grid = document.getElementById('home-latest');
+      const empty = document.getElementById('home-empty');
+
+      if (!list.length){
+        empty.style.display = 'block';
+      } else {
+        grid.innerHTML = list.map(o => `
+          <div class="card">
+            <h4>🐦 ${escapeHtml(o.espece || 'Observation')}</h4>
+            <p><span class="badge">${escapeHtml(o.lieu || 'Lieu')}</span> • ${escapeHtml(o.date || '')}
+              ${typeof o.lat==='number' && typeof o.lng==='number' ? ' • <span class="badge">GPS ✔</span>' : ''}</p>
+            <p>${escapeHtml(o.desc || '—')}</p>
+          </div>
+        `).join('');
+      }
+    });
+
+    // util d'échappement HTML
+    function escapeHtml(str=''){ return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[s])); }
+
+    // Bouton "Installer" PWA
+    (function(){
+      let deferredPrompt = null;
+      const btn = document.getElementById('pwa-install');
+      const installedMsg = document.getElementById('pwa-installed');
+
+      window.addEventListener('appinstalled', () => {
+        btn.style.display = 'none';
+        installedMsg.style.display = 'block';
+      });
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        btn.style.display = 'inline-block';
+      });
+
+      btn?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        btn.style.display = 'none';
+      });
+
+      // Si déjà en standalone (installée), affiche le message
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        installedMsg.style.display = 'block';
+      }
+    })();
+  </script>
+
+  <!-- Service Worker / PWA -->
   <script src="sw-register.js" defer></script>
+  <script src="install-check.js" defer></script>
 </body>
 </html>
