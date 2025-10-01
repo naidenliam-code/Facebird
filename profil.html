@@ -1,18 +1,19 @@
-<h2 id="profile-name">
-  <img id="profile-avatar" src="avatar-debutant-256.png" alt="avatar" style="width:42px;height:42px;border-radius:50%;margin-right:8px;object-fit:cover;"/>
-  Liam 👑 <span class="badge">Créateur</span>
-</h2>
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Mon profil</title>
+
   <link rel="stylesheet" href="style.css">
+
+  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#2c7be5">
+  <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
+
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Profil FaceBird : avatar, points, niveau et badges obtenus.">
 </head>
 <body>
   <header>
@@ -31,10 +32,9 @@
   </nav>
 
   <main class="container">
-    <!-- Carte principale : Avatar + Points + Niveau -->
     <div class="card center">
       <h2 id="profile-name">
-        <span id="profile-avatar" class="avatar" style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:var(--card-bg-weak,#eef3ff);margin-right:8px;font-size:26px">🐦</span>
+        <img id="profile-avatar" src="avatar-debutant-256.png" alt="avatar" style="width:42px;height:42px;border-radius:50%;margin-right:8px;object-fit:cover;"/>
         Liam 👑 <span class="badge">Créateur</span>
       </h2>
       <p id="xp-line" class="muted">Ancienneté : 1 jour 🎉</p>
@@ -51,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Tes badges existants -->
     <div class="card">
       <h3>🏆 Mes badges</h3>
       <div id="badges-list"></div>
@@ -60,13 +59,11 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script src="points.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Points & Niveaux
       const pts = FB_POINTS?.load() || 0;
       const lvl = FB_POINTS?.getLevel(pts);
       document.getElementById('points-total').textContent = pts + ' pts';
@@ -75,10 +72,12 @@
       document.getElementById('level-next').textContent  =
         lvl?.next ? `Prochain niveau : ${lvl.next} à ${lvl.cap} pts` : `Niveau max atteint — continue d’explorer !`;
 
-      // Avatar évolutif
-      document.getElementById('profile-avatar').textContent = FB_POINTS?.getAvatar(pts) || '🐦';
+      // avatar image selon le niveau
+      if (FB_POINTS?.getAvatarUrl) {
+        document.getElementById('profile-avatar').src = FB_POINTS.getAvatarUrl(pts);
+      }
 
-      // (Optionnel) lister les badges si FB_BADGES est présent
+      // badges (si présents)
       if (window.FB_BADGES){
         const root = document.getElementById('badges-list');
         const all = FB_BADGES.all();
@@ -89,6 +88,7 @@
       }
     });
   </script>
+
   <script src="sw-register.js" defer></script>
   <script src="install-check.js" defer></script>
 </body>
