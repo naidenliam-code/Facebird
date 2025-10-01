@@ -13,9 +13,8 @@
   <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="description" content="Ajoute tes observations d’oiseaux (avec position GPS) et gagne des points.">
+  <meta name="description" content="Ajoute tes observations d’oiseaux (avec photo et position GPS) et gagne des points.">
 </head>
 <body>
   <header>
@@ -54,6 +53,13 @@
           <textarea name="desc" rows="3" placeholder="Comportement, météo, etc."></textarea>
         </label>
 
+        <!-- 📷 Photo -->
+        <label style="display:block;margin-top:10px">
+          Photo de l’oiseau
+          <input type="file" id="obs-photo" accept="image/*" capture="environment">
+        </label>
+        <div id="photo-preview" style="margin-top:10px"></div>
+
         <!-- GPS -->
         <div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;align-items:center">
           <button id="obs-gps-btn" class="btn" type="button">📍 Ajouter ma position</button>
@@ -69,20 +75,18 @@
       </form>
     </div>
 
-    <!-- Liste d’observations (aperçu) -->
+    <!-- Liste d’observations -->
     <div id="obs-list" class="grid"></div>
   </main>
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
-  <!-- Scripts (ordre conseillé) -->
+  <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script src="points.js" defer></script>
 
-  <!-- Observations (complet avec points + GPS) -->
   <script>
-  // FaceBird - Observations : ajout + GPS + persistance + hooks points
   (function(){
     const KEY = 'fb-observations-v1';
     const form = document.querySelector('#obs-form');
@@ -92,6 +96,8 @@
     const lngInput = document.querySelector('#obs-lng');
     const clearBtn = document.querySelector('#clear-obs');
     const geoStatus = document.getElementById('geo-status');
+    const photoInput = document.getElementById('obs-photo');
+    const photoPreview = document.getElementById('photo-preview');
 
     const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -110,7 +116,6 @@
     }
 
     function render(){
-      if (!listEl) return;
       const arr = normalize(load()).sort((a,b)=> (b.ts||0)-(a.ts||0));
       if (!arr.length){
         listEl.innerHTML = `<div class="card empty">Aucune observation encore. Ajoute ta première avec le formulaire ci-dessus !</div>`;
@@ -127,6 +132,7 @@
             </div>
             <small class="muted">${new Date(o.ts||Date.now()).toLocaleString()}</small>
           </div>
+          ${o.photo ? `<img src="${o.photo}" alt="photo" style="max-width:100%;border-radius:10px;margin-top:8px"/>` : ''}
           <p style="margin:.4rem 0 0">${esc(o.desc || '—')}</p>
           <div class="muted" style="margin-top:6px">${o.likes||0} like(s) • ${o.comments?.length||0} commentaire(s)</div>
         </div>
@@ -144,11 +150,25 @@
         desc: (data.desc||'').trim(),
         lat: data.lat != null ? Number(data.lat) : undefined,
         lng: data.lng != null ? Number(data.lng) : undefined,
+        photo: data.photo || null,
         likes: 0,
         comments: []
       });
       save(arr);
     }
+
+    // Gestion photo preview (en base64)
+    let photoData = null;
+    photoInput?.addEventListener('change', ()=>{
+      const file = photoInput.files[0];
+      if (!file) { photoPreview.innerHTML=''; photoData=null; return; }
+      const reader = new FileReader();
+      reader.onload = e=>{
+        photoData = e.target.result;
+        photoPreview.innerHTML = `<img src="${photoData}" alt="aperçu" style="max-width:180px;border-radius:10px"/>`;
+      };
+      reader.readAsDataURL(file);
+    });
 
     // date par défaut aujourd’hui
     document.addEventListener('DOMContentLoaded', ()=>{
@@ -166,23 +186,17 @@
         date: form.date.value,
         desc: form.desc.value,
         lat: latInput?.value ? Number(latInput.value) : undefined,
-        lng: lngInput?.value ? Number(lngInput.value) : undefined
+        lng: lngInput?.value ? Number(lngInput.value) : undefined,
+        photo: photoData
       };
       if (!d.espece.trim()){
         alert("Indique au moins l'espèce ✍️"); return;
       }
       addObservation(d);
-      if (window.FB_BADGES){
-        FB_BADGES.incCount();
-        const sp = (d.espece||'').toLowerCase();
-        if (sp.includes('hibou')) FB_BADGES.award('owl_spot');
-        if (sp.includes('mésange') || sp.includes('mesange')) FB_BADGES.award('mesange');
-        if (sp.includes('pigeon')) FB_BADGES.award('pigeon');
-      }
-      // ➕ points
       FB_POINTS?.add('observation');
-
       form.reset();
+      photoPreview.innerHTML='';
+      photoData=null;
       if (form?.date) form.date.value = new Date().toISOString().slice(0,10);
       if (latInput) latInput.value = '';
       if (lngInput) lngInput.value = '';
@@ -201,10 +215,8 @@
         if (latInput) latInput.value = String(latitude);
         if (lngInput) lngInput.value = String(longitude);
         geoStatus.textContent = `Position ajoutée ✔ (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-        // ➕ points GPS
         FB_POINTS?.add('gps_used');
       }, err=>{
-        console.warn(err);
         geoStatus.textContent = "Impossible d’obtenir la position ❌";
       }, { enableHighAccuracy:true, timeout: 10000, maximumAge: 0 });
     });
