@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FaceBird 🐦 - Fil d’actualité</title>
 
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 
   <!-- PWA / Manifest -->
@@ -12,8 +13,9 @@
   <meta name="theme-color" content="#1e73e8">
   <link rel="apple-touch-icon" href="icon-192.png">
 
+  <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="description" content="Fil d’actualité FaceBird : dernières observations, likes, commentaires et partage.">
+  <meta name="description" content="Fil d’actualité FaceBird : dernières observations avec photos, likes, commentaires et partage.">
 
   <style>
     .post { display:flex; gap:12px; }
@@ -29,6 +31,19 @@
     .comment-form { display:flex; gap:8px; margin-top:6px }
     .comment-form input { flex:1 }
     .empty { color:#667085; text-align:center; padding:20px 10px }
+
+    /* Photo dans le post */
+    .post-photo { margin-top:8px; border-radius:12px; overflow:hidden; }
+    .post-photo img { width:100%; height:auto; display:block; }
+
+    /* Lightbox simple */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      display:none; align-items:center; justify-content:center; z-index: 9999;
+    }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 12px; }
+    .lightbox .close { position:absolute; top:12px; right:12px; background:#fff; border:none; border-radius:10px; padding:8px 10px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -53,19 +68,25 @@
 
   <footer>Créé par <b>Liam 👑</b></footer>
 
+  <!-- Lightbox -->
+  <div id="lb" class="lightbox" aria-hidden="true">
+    <button class="close" aria-label="Fermer">✕</button>
+    <img id="lb-img" alt="Photo observation">
+  </div>
+
   <!-- Scripts -->
   <script src="theme.js" defer></script>
   <script src="badges.js" defer></script>
   <script src="points.js" defer></script>
 
-  <!-- feed.js intégré -->
+  <!-- feed.js intégré (photos + avatar image + likes/commentaires/partage) -->
   <script>
-  // FaceBird - Fil d'actualité (likes, commentaires, partage) + avatar niveau
   (function () {
     const KEY = 'fb-observations-v1';
     const USERNAME = 'Liam';
     const $ = (s, r = document) => r.querySelector(s);
     const esc = (str = '') => String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+
     const speciesIcon = (espece = '') => {
       const s = (espece||'').toLowerCase();
       if (s.includes('hibou') || s.includes('chouette')) return '🦉';
@@ -73,8 +94,10 @@
       if (s.includes('mésange') || s.includes('mesange')) return '🐦';
       return '🐦';
     };
+
     const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
     const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+
     function normalize(list) {
       let changed = false;
       list.forEach(o => {
@@ -95,6 +118,7 @@
       }
       feed.innerHTML = '';
       list.forEach(o => feed.appendChild(renderPost(o)));
+      bindLightbox();
     }
 
     function renderPost(o) {
@@ -114,6 +138,13 @@
               ${hasGPS ? `<span class="badge">GPS ✔</span>` : ''}
               <small class="muted">• ${esc(o.date || '')}</small>
             </div>
+
+            ${o.photo ? `
+              <div class="post-photo">
+                <img src="${o.photo}" alt="photo observation" class="zoomable" />
+              </div>
+            ` : ''}
+
             <p style="margin:.4rem 0 0">${esc(o.desc || '—')}</p>
 
             <div class="post-actions">
@@ -212,6 +243,30 @@
       t.className = 'toast'; t.textContent = msg;
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 2000);
+    }
+
+    /* Lightbox */
+    function bindLightbox(){
+      const lb = document.getElementById('lb');
+      const lbImg = document.getElementById('lb-img');
+      const closeBtn = lb.querySelector('.close');
+
+      document.querySelectorAll('.zoomable').forEach(img => {
+        img.addEventListener('click', () => {
+          lbImg.src = img.src;
+          lb.classList.add('open');
+          lb.setAttribute('aria-hidden', 'false');
+        });
+      });
+
+      const close = () => {
+        lb.classList.remove('open');
+        lb.setAttribute('aria-hidden', 'true');
+        lbImg.src = '';
+      };
+      closeBtn.addEventListener('click', close);
+      lb.addEventListener('click', (e)=> { if (e.target === lb) close(); });
+      window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') close(); });
     }
 
     document.addEventListener('DOMContentLoaded', renderFeed);
