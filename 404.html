@@ -1,50 +1,41 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FaceBird 🐦 — 404</title>
+<!-- À coller DANS le <main> de 404.html, sous ton message 404 -->
+<div class="card center">
+  <h2>Besoin d’un raccourci ?</h2>
+  <p>Essaie l’un de ces liens :</p>
+  <p>
+    <a class="btn" href="index.html">🏠 Accueil</a>
+    <a class="btn" href="feed.html">📰 Fil</a>
+    <a class="btn" href="observations.html">📸 Observations</a>
+    <a class="btn" href="quiz.html">❓ Quiz</a>
+    <a class="btn" href="profil.html">👤 Profil</a>
+  </p>
 
-  <link rel="stylesheet" href="style.css">
+  <hr>
 
-  <!-- PWA / Manifest -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1e73e8">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <h3>Diagnostic rapide</h3>
+  <p id="diag-info" class="muted">Vérification des pages en cours…</p>
+  <ul id="diag-list" style="list-style:none; padding-left:0"></ul>
+</div>
 
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <style>.big404{font-size:56px;margin:0}.oops{font-size:18px;color:#667085;margin:.4rem 0 1rem}</style>
-</head>
-<body>
-  <header>
-    <h1>🐦 FaceBird</h1>
-    <p>La communauté des amoureux d’oiseaux</p>
-  </header>
+<script>
+// Petit diagnostic: teste l’existence de fichiers clés
+(async () => {
+  const files = ['index.html','feed.html','observations.html','quiz.html','profil.html','map.html'];
+  const list = document.getElementById('diag-list');
+  const info = document.getElementById('diag-info');
 
-  <nav>
-    <a href="index.html">Accueil</a>
-    <a href="feed.html">Fil</a>
-    <a href="observations.html">Observations</a>
-    <a href="quiz.html">Quiz</a>
-    <a href="profil.html">Profil</a>
-    <a href="map.html">Carte</a>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
-  </nav>
+  const originPath = location.origin + location.pathname.replace(/404\.html$/, '');
+  info.textContent = 'Chemin détecté: ' + originPath;
 
-  <main class="container">
-    <div class="card center">
-      <p class="big404">404</p>
-      <p class="oops">Oups… cet oiseau s’est envolé. La page demandée n’existe pas.</p>
-      <a class="btn" href="index.html">⬅ Revenir à l’accueil</a>
-    </div>
-  </main>
-
-  <footer>Créé par <b>Liam 👑</b></footer>
-
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
-  <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
-</body>
-</html>
+  for (const f of files) {
+    let ok = false, status = 0;
+    try {
+      const res = await fetch(f, { method:'HEAD', cache:'no-store' });
+      ok = res.ok; status = res.status;
+    } catch (e) { ok = false; }
+    const li = document.createElement('li');
+    li.textContent = (ok ? '✅ ' : '❌ ') + f + (ok ? ' trouvé' : ' introuvable') + (status ? ` (HTTP ${status})` : '');
+    list.appendChild(li);
+  }
+})();
+</script>
