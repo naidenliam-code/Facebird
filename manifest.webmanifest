@@ -6,6 +6,7 @@
   "display": "standalone",
   "background_color": "#f7f9fc",
   "theme_color": "#1e73e8",
+  "description": "Partage tes observations d’oiseaux et découvre la nature avec la communauté FaceBird.",
   "icons": [
     {
       "src": "icons/icon-192.png",
