@@ -345,6 +345,11 @@
   </script>
 
   <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
+  <script src="install-check.js" defer></script><script>
+if ('serviceWorker' in navigator) {
+  var base=(location.pathname.split('/').slice(0,-1).join('/')+'/').replace(/\/+$/,'/')||'/';
+  navigator.serviceWorker.register(base+'service-worker.js',{scope:base}).catch(()=>{});
+}
+</script>
 </body>
 </html>
