@@ -132,7 +132,27 @@
   </script>
 
   <!-- Service Worker / PWA -->
-  <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
+  <script>
+  (function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    var basePath = (new URL(document.querySelector('base')?.href || '/', location.href)).pathname;
+    navigator.serviceWorker.register(basePath + 'service-worker.js', { scope: basePath })
+      .then(reg => {
+        console.log('SW OK sur', basePath);
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw && nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('Nouvelle version prête (recharge pour l’activer)');
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('SW KO', err));
+  })();
+</script>
+</body>
+</html>
 </body>
 </html>
