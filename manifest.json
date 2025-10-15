@@ -2,7 +2,7 @@
   "name": "FaceBird",
   "short_name": "FaceBird",
   "description": "La communauté des amoureux d’oiseaux 🐦",
-  "start_url": "/Facebird/index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1976d2",
