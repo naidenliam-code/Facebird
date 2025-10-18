@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FaceBird 🐦 – Connexion</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1976d2" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .auth-wrap{max-width:520px;margin:24px auto}
+    .tabs{display:flex;gap:8px;margin:8px 0 16px}
+    .tabs button{flex:1}
+    .panel{display:none}
+    .panel.active{display:block}
+    .avatar-prev{width:72px;height:72px;border-radius:50%;overflow:hidden;background:#eef2f7;display:flex;align-items:center;justify-content:center;margin:6px 0}
+    .avatar-prev img{width:100%;height:100%;object-fit:cover}
+    .hint{color:var(--muted);font-size:.9rem}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔐 Se connecter à FaceBird</h1>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="feed.html">Fil</a>
+      <a href="observations.html">Observations</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="profil.html">Profil</a>
+      <span id="auth-slot"></span>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="card auth-wrap">
+      <div class="tabs">
+        <button class="btn-small" data-tab="login">Se connecter</button>
+        <button class="btn-small" data-tab="signup">Créer un compte</button>
+      </div>
+
+      <!-- Connexion -->
+      <div class="panel active" id="panel-login">
+        <div class="row">
+          <label>Pseudo</label>
+          <input id="login-username" type="text" placeholder="ex: Alouette42" />
+        </div>
+        <div class="row">
+          <label>Mot de passe</label>
+          <input id="login-password" type="password" placeholder="••••••" />
+        </div>
+        <div class="row">
+          <button class="btn" id="btn-login">Se connecter</button>
+        </div>
+        <p class="hint">Astuce : si tu n’as pas de compte, crée-en un dans l’onglet “Créer un compte”.</p>
+      </div>
+
+      <!-- Création de compte -->
+      <div class="panel" id="panel-signup">
+        <div class="row">
+          <label>Pseudo (3–20 caractères, lettres/chiffres/_)</label>
+          <input id="su-username" type="text" placeholder="ex: Mésange_bleue" />
+        </div>
+        <div class="row">
+          <label>Mot de passe (min 6 caractères)</label>
+          <input id="su-password" type="password" placeholder="••••••" />
+        </div>
+        <div class="row">
+          <label>Avatar (optionnel)</label>
+          <input id="su-avatar" type="file" accept="image/*" />
+          <div class="avatar-prev" id="su-avatar-prev">🖼️</div>
+        </div>
+        <div class="row">
+          <button class="btn" id="btn-signup">Créer mon compte</button>
+        </div>
+        <p class="hint">Les comptes sont stockés <strong>localement</strong> dans ton navigateur. Parfait pour le hors-ligne, mais pas synchronisé entre appareils.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="login.js" defer></script>
+  <script src="sw-register.js" defer></script>
+
+  <script>
+    // Tabs
+    const tabsBtns = document.querySelectorAll('.tabs button');
+    const panels = {
+      login: document.getElementById('panel-login'),
+      signup: document.getElementById('panel-signup')
+    };
+    tabsBtns.forEach(b => b.onclick = () => {
+      tabsBtns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      Object.values(panels).forEach(p => p.classList.remove('active'));
+      panels[b.dataset.tab].classList.add('active');
+    });
+    // default active
+    tabsBtns[0].classList.add('active');
+
+    // Prévisualisation avatar
+    document.getElementById('su-avatar').addEventListener('change', async (e) => {
+      const f = e.target.files?.[0];
+      const prev = document.getElementById('su-avatar-prev');
+      if (!f) { prev.innerHTML = '🖼️'; return; }
+      const url = URL.createObjectURL(f);
+      prev.innerHTML = `<img src="${url}" alt="avatar" />`;
+    });
+  </script>
+</body>
+</html>
