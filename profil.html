@@ -2,94 +2,64 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FaceBird 🐦 - Mon profil</title>
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FaceBird 🐦 – Profil</title>
 
-  <link rel="stylesheet" href="style.css">
-
-  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1e73e8">
-  <link rel="apple-touch-icon" href="icon-192.png">
-
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="description" content="Profil FaceBird : avatar, points, niveau et badges obtenus.">
+  <meta name="theme-color" content="#1976d2">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>👤 Mon profil</h1>
-    <p>Bienvenue dans ton espace FaceBird</p>
+    <h1>👤 Profil</h1>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="feed.html">Fil</a>
+      <a href="observations.html">Observations</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="profil.html" aria-current="page">Profil</a>
+      <span id="auth-slot"></span>
+    </nav>
   </header>
 
-  <nav>
-    <a href="index.html">Accueil</a>
-    <a href="feed.html">Fil</a>
-    <a href="observations.html">Observations</a>
-    <a href="quiz.html">Quiz</a>
-    <a class="active" href="profil.html">Profil</a>
-    <a href="map.html">Carte</a>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
-  </nav>
-
   <main class="container">
-    <div class="card center">
-      <h2 id="profile-name">
-        <img id="profile-avatar" src="avatar-debutant-256.png" alt="avatar" style="width:42px;height:42px;border-radius:50%;margin-right:8px;object-fit:cover;"/>
-        Liam 👑 <span class="badge">Créateur</span>
-      </h2>
-      <p id="xp-line" class="muted">Ancienneté : 1 jour 🎉</p>
-
-      <div id="level-box" style="max-width:520px;margin:10px auto 0;text-align:left">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <strong id="level-name">Niveau —</strong>
-          <span id="points-total">0 pts</span>
-        </div>
-        <div style="height:10px;border-radius:999px;background:#e6eaf2;overflow:hidden">
-          <div id="level-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#2c7be5,#66b1ff)"></div>
-        </div>
-        <div id="level-next" class="muted" style="margin-top:6px;font-size:.9rem"></div>
+    <div class="card" id="profile-card">
+      <h2>Mon compte</h2>
+      <div class="row" id="profile-row">
+        <!-- rempli par JS -->
       </div>
-    </div>
-
-    <div class="card">
-      <h3>🏆 Mes badges</h3>
-      <div id="badges-list"></div>
+      <div class="row">
+        <button class="btn-small" id="logout-btn">Se déconnecter</button>
+      </div>
     </div>
   </main>
 
-  <footer>Créé par <b>Liam 👑</b></footer>
-
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
+  <script src="login.js" defer></script>
+  <script src="sw-register.js" defer></script>
   <script>
+    // Oblige la connexion avant d’afficher le profil
     document.addEventListener('DOMContentLoaded', () => {
-      const pts = FB_POINTS?.load() || 0;
-      const lvl = FB_POINTS?.getLevel(pts);
-      document.getElementById('points-total').textContent = pts + ' pts';
-      document.getElementById('level-name').textContent  = 'Niveau ' + (lvl?.current || '—');
-      document.getElementById('level-bar').style.width   = (lvl?.progress || 0) + '%';
-      document.getElementById('level-next').textContent  =
-        lvl?.next ? `Prochain niveau : ${lvl.next} à ${lvl.cap} pts` : `Niveau max atteint — continue d’explorer !`;
+      fbAuth.requireLogin();
 
-      // avatar image selon le niveau
-      if (FB_POINTS?.getAvatarUrl) {
-        document.getElementById('profile-avatar').src = FB_POINTS.getAvatarUrl(pts);
-      }
+      const sess = fbAuth.getSession();
+      const users = JSON.parse(localStorage.getItem('fb_users') || '{}');
+      const u = users[sess.username] || {};
 
-      // badges (si présents)
-      if (window.FB_BADGES){
-        const root = document.getElementById('badges-list');
-        const all = FB_BADGES.all();
-        const cat = FB_BADGES.catalog;
-        root.innerHTML = all.length
-          ? all.map(id => `<span class="badge-pill">${cat[id]?.icon || '🏅'} ${cat[id]?.label || id}</span>`).join('')
-          : '<p class="muted">Aucun badge… ajoute une observation ou joue au quiz !</p>';
-      }
+      const row = document.getElementById('profile-row');
+      row.innerHTML = `
+        <div class="avatar"><img src="${u.avatarDataUrl || 'icons/icon-192.png'}" alt="avatar"></div>
+        <div>
+          <p><strong>${sess.username}</strong></p>
+          <p class="muted">Compte local (hors-ligne). Créé le : ${new Date(u.createdAt || Date.now()).toLocaleString()}</p>
+        </div>
+      `;
+
+      document.getElementById('logout-btn').onclick = () => {
+        fbAuth.clearSession();
+        location.href = 'login.html';
+      };
     });
   </script>
-
-  <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
 </body>
 </html>
