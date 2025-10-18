@@ -1,79 +1,132 @@
-// Classement FaceBird 🐦
-// Les données viennent du localStorage : fb_users ou fb_posts
+// classement.js
+(function(){
+  // ───────── Helpers stockage ─────────
+  const readJSON = (k, fallback) => {
+    try { return JSON.parse(localStorage.getItem(k)) ?? fallback; }
+    catch { return fallback; }
+  };
 
-function getUsers() {
-  try {
-    return JSON.parse(localStorage.getItem('fb_users')) || [];
-  } catch {
-    return [];
-  }
-}
+  // ⚠️ Adapte ici si tes clés diffèrent :
+  const users = readJSON('fb_users', []) || readJSON('users', []);
+  const posts = readJSON('fb_posts', []) || readJSON('posts', []);
+  const obs   = readJSON('fb_observations', []) || readJSON('observations', []);
+  const pointsMap = readJSON('fb_points', {}); // si tu gardes un compteur par id { [userId]: points }
 
-function buildFromPosts() {
-  try {
-    const posts = JSON.parse(localStorage.getItem('fb_posts')) || [];
-    const map = new Map();
-    for (const p of posts) {
-      const name = p.userName || p.author || 'Anonyme';
-      const u = map.get(name) || { name, points: 0, observations: 0 };
-      u.points += p.points || 10; // 10 pts par post
-      u.observations++;
-      map.set(name, u);
-    }
-    return [...map.values()];
-  } catch {
-    return [];
-  }
-}
+  // ───────── Modèle unifié des utilisateurs ─────────
+  // chaque user: { id, name, avatar?, points?, postsCount?, obsCount? }
+  const byId = new Map();
 
-function medal(i) {
-  return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
-}
-
-function render(users) {
-  const body = document.getElementById('classementBody');
-  const top3 = document.getElementById('top3');
-  body.innerHTML = '';
-  top3.innerHTML = '';
-
-  // tri
-  users.sort((a, b) => b.points - a.points);
-
-  users.forEach((u, i) => {
-    body.innerHTML += `
-      <tr>
-        <td>${medal(i)}</td>
-        <td>${u.name}</td>
-        <td class="right">${u.points}</td>
-        <td class="right">${u.observations}</td>
-      </tr>
-    `;
+  // 1) base: users connus
+  users.forEach(u => {
+    if (!u || (!u.id && !u.userId)) return;
+    const id = u.id ?? u.userId;
+    byId.set(id, {
+      id,
+      name: u.name ?? u.username ?? 'Anonyme',
+      avatar: u.avatar ?? u.photo ?? '',
+      points: Number(u.points ?? 0),
+      postsCount: 0,
+      obsCount: 0,
+    });
   });
 
-  users.slice(0, 3).forEach((u, i) => {
-    top3.innerHTML += `
-      <article class="card">
-        <h3>${medal(i)} ${u.name}</h3>
-        <p><b>${u.points}</b> points<br>${u.observations} observations</p>
-      </article>
-    `;
+  // 2) complète à partir des posts/obs (et compile des points si pas fournis)
+  const ensure = (id, name='Anonyme') => {
+    if (!byId.has(id)) byId.set(id, { id, name, avatar:'', points:0, postsCount:0, obsCount:0 });
+    return byId.get(id);
+  };
+
+  posts.forEach(p => {
+    if (!p) return;
+    const id = p.userId ?? p.authorId ?? p.ownerId;
+    if (!id) return;
+    const u = ensure(id, p.userName ?? p.author ?? 'Anonyme');
+    u.postsCount++;
+    // optionnel: points issus de posts (ex: +5/post +1/like)
+    const base = 5;
+    const likes = Array.isArray(p.likes) ? p.likes.length : Number(p.likes ?? 0);
+    u.points += base + likes;
   });
-}
 
-function initClassement() {
-  let users = getUsers();
-  if (!users.length) users = buildFromPosts();
+  obs.forEach(o => {
+    if (!o) return;
+    const id = o.userId ?? o.authorId ?? o.ownerId;
+    if (!id) return;
+    const u = ensure(id, o.userName ?? o.author ?? 'Anonyme');
+    u.obsCount++;
+    // optionnel: points pour obs (ex: +10/obs)
+    u.points += 10;
+  });
 
-  // données fictives si rien
-  if (!users.length) {
-    users = [
-      { name: 'Huppe Fasciée', points: 320, observations: 18 },
-      { name: 'Mésange Bleue', points: 540, observations: 26 },
-      { name: 'Rougegorge', points: 120, observations: 7 },
-    ];
+  // 3) écrase/complète via carte de points si tu en gardes une séparée
+  Object.entries(pointsMap || {}).forEach(([id, pts]) => {
+    const u = ensure(id);
+    u.points = Number(pts ?? u.points ?? 0);
+  });
+
+  // Fallback si aucune donnée
+  if (byId.size === 0) {
+    [
+      { id:'u1', name:'Alice', points:120, postsCount:8, obsCount:5 },
+      { id:'u2', name:'Bob',   points: 95, postsCount:5, obsCount:6 },
+      { id:'u3', name:'Chloé', points: 80, postsCount:2, obsCount:7 },
+    ].forEach(u=>byId.set(u.id, u));
   }
 
-  render(users);
-}
+  let rows = Array.from(byId.values())
+    .map(u => ({
+      ...u,
+      points: Number(u.points ?? 0),
+      postsCount: Number(u.postsCount ?? 0),
+      obsCount: Number(u.obsCount ?? 0),
+    }))
+    .sort((a,b) => b.points - a.points);
 
-document.addEventListener('DOMContentLoaded', initClassement);
+  // ───────── UI ─────────
+  const $ = sel => document.querySelector(sel);
+  const body = $('#board-body');
+  const search = $('#search');
+  const filter = $('#filter');
+
+  function render(list) {
+    body.innerHTML = '';
+    list.forEach((u, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="usercell">
+          ${u.avatar ? `<img src="${u.avatar}" class="avatar" alt="">` : `<span class="avatar placeholder">🐦</span>`}
+          <span>${u.name}</span>
+        </td>
+        <td><strong>${u.points}</strong></td>
+        <td>${u.postsCount}</td>
+        <td>${u.obsCount}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  function applyFilters() {
+    const q = (search.value || '').toLowerCase().trim();
+    let out = rows.filter(u => u.name.toLowerCase().includes(q));
+    if (filter.value === 'top10') out = out.slice(0, 10);
+    if (filter.value === 'top50') out = out.slice(0, 50);
+    render(out);
+  }
+
+  search?.addEventListener('input', applyFilters);
+  filter?.addEventListener('change', applyFilters);
+
+  // styles minimes si besoin
+  const style = document.createElement('style');
+  style.textContent = `
+    .table-scroll { overflow:auto; }
+    .usercell { display:flex; align-items:center; gap:.6rem; }
+    .avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; }
+    .avatar.placeholder { display:inline-grid; place-items:center; background:#eef; width:28px; height:28px; border-radius:50%; }
+  `;
+  document.head.appendChild(style);
+
+  // rendu initial
+  applyFilters();
+})();
