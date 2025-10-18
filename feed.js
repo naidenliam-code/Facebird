@@ -1,47 +1,70 @@
-// feed.js — Fil local avec création + édition + suppression
-// Stockage dans localStorage sous la clé "facebird_posts"
+// feed.js — Fil local : création + édition + suppression + réactions
+// Stockage principal : localStorage["facebird_posts"]
+// Réactions perso (par appareil/utilisateur) : localStorage["facebird_myreactions"]
 
 const textarea   = document.getElementById('post-content');
 const publishBtn = document.getElementById('publish');
 const postsDiv   = document.getElementById('posts');
 
 const FEED_KEY = 'facebird_posts';
+const MY_REACTS_KEY = 'facebird_myreactions';
+
+// Choisis les émojis que tu veux afficher
+const REACTIONS = ['👍','❤️','🐦','😂','😮','🎉'];
 
 // ---------- Utils ----------
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const nowStr = () => new Date().toLocaleString();
 
-function loadPosts() {
-  let arr = [];
-  try { arr = JSON.parse(localStorage.getItem(FEED_KEY) || '[]'); } catch { arr = []; }
-  // Migration : si anciens posts sans id, on leur en met un
-  let changed = false;
-  arr.forEach(p => { if (!p.id) { p.id = uid(); changed = true; } });
-  if (changed) savePosts(arr);
-  return arr;
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+  catch { return fallback; }
 }
-
-function savePosts(arr) {
-  localStorage.setItem(FEED_KEY, JSON.stringify(arr));
+function save(key, val) {
+  localStorage.setItem(key, JSON.stringify(val));
 }
-
-function nowStr() {
-  return new Date().toLocaleString();
-}
-
 function escapeHTML(s) {
-  return s.replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function nl2brSafe(s) { return escapeHTML(s).replace(/\n/g,'<br>'); }
 
-function nl2brSafe(s) {
-  return escapeHTML(s).replace(/\n/g, '<br>');
-}
+// Posts + réactions stockés
+let posts = load(FEED_KEY, []);
+let myReacts = load(MY_REACTS_KEY, {}); // { [postId]: { [emoji]: true } }
 
-// État en mémoire
-let posts = loadPosts();
+// Migration : ajoute id et structure reactions aux anciens posts
+let migrated = false;
+posts.forEach(p => {
+  if (!p.id) { p.id = uid(); migrated = true; }
+  if (!p.reactions) {
+    p.reactions = {}; REACTIONS.forEach(e => p.reactions[e] = 0);
+    migrated = true;
+  } else {
+    // S'assure que toutes les clés existent
+    REACTIONS.forEach(e => { if (typeof p.reactions[e] !== 'number') p.reactions[e] = 0; });
+  }
+});
+if (migrated) save(FEED_KEY, posts);
 
 // ---------- Rendu ----------
+function renderReactions(post) {
+  const mine = myReacts[post.id] || {};
+  return `
+    <div class="row" style="gap:6px; margin-top:6px; flex-wrap:wrap">
+      ${REACTIONS.map(emo => {
+        const count = post.reactions?.[emo] || 0;
+        const active = mine[emo] ? 'aria-pressed="true"' : '';
+        return `
+          <button class="icon-btn" data-action="react" data-emoji="${emo}" ${active}>
+            <span>${emo}</span>
+            <small>${count}</small>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
 function renderPosts() {
   if (!postsDiv) return;
 
@@ -63,6 +86,8 @@ function renderPosts() {
             <button class="btn-small" data-action="edit">✏️ Modifier</button>
             <button class="btn-small" data-action="delete">🗑️ Supprimer</button>
           </div>
+
+          ${renderReactions(p)}
         </div>
       </article>
     `;
@@ -77,16 +102,17 @@ publishBtn?.addEventListener('click', () => {
   const newPost = {
     id: uid(),
     text,
-    date: nowStr()
+    date: nowStr(),
+    reactions: REACTIONS.reduce((acc, e) => (acc[e]=0, acc), {})
   };
   posts.unshift(newPost);
-  savePosts(posts);
+  save(FEED_KEY, posts);
 
   if (textarea) textarea.value = '';
   renderPosts();
 });
 
-// ---------- Événements (édition / suppression) ----------
+// ---------- Délégation d'événements (edit / delete / react) ----------
 postsDiv?.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-action]');
   if (!btn) return;
@@ -99,16 +125,19 @@ postsDiv?.addEventListener('click', (ev) => {
   const idx = posts.findIndex(p => p.id === id);
   if (idx === -1) return;
 
+  // Supprimer
   if (action === 'delete') {
-    // Supprimer
     posts.splice(idx, 1);
-    savePosts(posts);
+    // Nettoie aussi mes réactions locales pour ce post
+    delete myReacts[id];
+    save(FEED_KEY, posts);
+    save(MY_REACTS_KEY, myReacts);
     renderPosts();
     return;
   }
 
+  // Passer en mode édition
   if (action === 'edit') {
-    // Passer en mode édition : remplacer le texte par un textarea + boutons
     const current = posts[idx];
     const body = article.querySelector('.post-body');
     body.innerHTML = `
@@ -123,9 +152,36 @@ postsDiv?.addEventListener('click', (ev) => {
     `;
     return;
   }
+
+  // Réaction (toggle)
+  if (action === 'react') {
+    const emoji = btn.dataset.emoji;
+    const post = posts[idx];
+
+    // init structures
+    if (!myReacts[id]) myReacts[id] = {};
+    if (typeof post.reactions?.[emoji] !== 'number') {
+      if (!post.reactions) post.reactions = {};
+      post.reactions[emoji] = 0;
+    }
+
+    // toggle : si j'avais déjà réagi avec cet emoji, on retire ; sinon on ajoute
+    if (myReacts[id][emoji]) {
+      myReacts[id][emoji] = false;
+      post.reactions[emoji] = Math.max(0, post.reactions[emoji] - 1);
+    } else {
+      myReacts[id][emoji] = true;
+      post.reactions[emoji] = (post.reactions[emoji] || 0) + 1;
+    }
+
+    save(FEED_KEY, posts);
+    save(MY_REACTS_KEY, myReacts);
+    renderPosts();
+    return;
+  }
 });
 
-// Sauvegarde / Annuler en mode édition (délégation d'événements)
+// Sauvegarde / Annuler en mode édition
 postsDiv?.addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-action]');
   if (!btn) return;
@@ -141,7 +197,6 @@ postsDiv?.addEventListener('click', (ev) => {
   if (idx === -1) return;
 
   if (action === 'cancel') {
-    // Ré-afficher le post sans modifier
     renderPosts();
     return;
   }
@@ -151,7 +206,7 @@ postsDiv?.addEventListener('click', (ev) => {
     const newText = (area?.value || '').trim();
     posts[idx].text = newText;
     posts[idx].updatedAt = nowStr();
-    savePosts(posts);
+    save(FEED_KEY, posts);
     renderPosts();
     return;
   }
