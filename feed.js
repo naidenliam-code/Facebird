@@ -1,6 +1,7 @@
-// feed.js — Fil local : création + édition + suppression + réactions
-// Stockage principal : localStorage["facebird_posts"]
-// Réactions perso (par appareil/utilisateur) : localStorage["facebird_myreactions"]
+// feed.js — Fil local : création + édition + suppression + réactions (1 seule par post)
+// Stockage :
+//  - facebird_posts : tableau des posts [{id,text,date,updatedAt?,reactions:{emoji->count}}]
+//  - facebird_myreactions : { [postId]: "emojiChoisi" }  (une seule réaction par post)
 
 const textarea   = document.getElementById('post-content');
 const publishBtn = document.getElementById('publish');
@@ -9,30 +10,31 @@ const postsDiv   = document.getElementById('posts');
 const FEED_KEY = 'facebird_posts';
 const MY_REACTS_KEY = 'facebird_myreactions';
 
-// Choisis les émojis que tu veux afficher
+// Émojis disponibles
 const REACTIONS = ['👍','❤️','🐦','😂','😮','🎉'];
 
 // ---------- Utils ----------
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const nowStr = () => new Date().toLocaleString();
 
 function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
   catch { return fallback; }
 }
-function save(key, val) {
-  localStorage.setItem(key, JSON.stringify(val));
-}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
 function escapeHTML(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 function nl2brSafe(s) { return escapeHTML(s).replace(/\n/g,'<br>'); }
 
-// Posts + réactions stockés
+// ---------- État ----------
 let posts = load(FEED_KEY, []);
-let myReacts = load(MY_REACTS_KEY, {}); // { [postId]: { [emoji]: true } }
+let myReacts = load(MY_REACTS_KEY, {}); // { postId: "emoji" }
 
-// Migration : ajoute id et structure reactions aux anciens posts
+// Migration posts : id + structure reactions
 let migrated = false;
 posts.forEach(p => {
   if (!p.id) { p.id = uid(); migrated = true; }
@@ -40,20 +42,29 @@ posts.forEach(p => {
     p.reactions = {}; REACTIONS.forEach(e => p.reactions[e] = 0);
     migrated = true;
   } else {
-    // S'assure que toutes les clés existent
     REACTIONS.forEach(e => { if (typeof p.reactions[e] !== 'number') p.reactions[e] = 0; });
   }
 });
 if (migrated) save(FEED_KEY, posts);
 
+// Migration myReacts : si ancien format objet {emoji:true,...}, on garde le 1er actif
+Object.keys(myReacts).forEach(pid => {
+  const val = myReacts[pid];
+  if (val && typeof val === 'object') {
+    const first = Object.keys(val).find(k => val[k]);
+    myReacts[pid] = first || null;
+  }
+});
+save(MY_REACTS_KEY, myReacts);
+
 // ---------- Rendu ----------
 function renderReactions(post) {
-  const mine = myReacts[post.id] || {};
+  const mine = myReacts[post.id] || null;
   return `
     <div class="row" style="gap:6px; margin-top:6px; flex-wrap:wrap">
       ${REACTIONS.map(emo => {
         const count = post.reactions?.[emo] || 0;
-        const active = mine[emo] ? 'aria-pressed="true"' : '';
+        const active = (mine === emo) ? 'aria-pressed="true"' : '';
         return `
           <button class="icon-btn" data-action="react" data-emoji="${emo}" ${active}>
             <span>${emo}</span>
@@ -128,8 +139,7 @@ postsDiv?.addEventListener('click', (ev) => {
   // Supprimer
   if (action === 'delete') {
     posts.splice(idx, 1);
-    // Nettoie aussi mes réactions locales pour ce post
-    delete myReacts[id];
+    delete myReacts[id]; // nettoie ma réaction locale pour ce post
     save(FEED_KEY, posts);
     save(MY_REACTS_KEY, myReacts);
     renderPosts();
@@ -153,25 +163,26 @@ postsDiv?.addEventListener('click', (ev) => {
     return;
   }
 
-  // Réaction (toggle)
+  // Réaction (1 seule par post)
   if (action === 'react') {
     const emoji = btn.dataset.emoji;
-    const post = posts[idx];
+    const post  = posts[idx];
 
-    // init structures
-    if (!myReacts[id]) myReacts[id] = {};
-    if (typeof post.reactions?.[emoji] !== 'number') {
-      if (!post.reactions) post.reactions = {};
-      post.reactions[emoji] = 0;
-    }
+    // Réaction actuelle (si existe)
+    const current = myReacts[id] || null;
 
-    // toggle : si j'avais déjà réagi avec cet emoji, on retire ; sinon on ajoute
-    if (myReacts[id][emoji]) {
-      myReacts[id][emoji] = false;
-      post.reactions[emoji] = Math.max(0, post.reactions[emoji] - 1);
+    if (current === emoji) {
+      // Re-cliquer sur la même réaction => on l'enlève
+      post.reactions[emoji] = Math.max(0, (post.reactions[emoji] || 0) - 1);
+      myReacts[id] = null;
     } else {
-      myReacts[id][emoji] = true;
+      // On change de réaction : décrémente l'ancienne si elle existait
+      if (current && typeof post.reactions[current] === 'number') {
+        post.reactions[current] = Math.max(0, post.reactions[current] - 1);
+      }
+      // Puis incrémente la nouvelle
       post.reactions[emoji] = (post.reactions[emoji] || 0) + 1;
+      myReacts[id] = emoji;
     }
 
     save(FEED_KEY, posts);
@@ -196,10 +207,7 @@ postsDiv?.addEventListener('click', (ev) => {
   const idx = posts.findIndex(p => p.id === id);
   if (idx === -1) return;
 
-  if (action === 'cancel') {
-    renderPosts();
-    return;
-  }
+  if (action === 'cancel') { renderPosts(); return; }
 
   if (action === 'save') {
     const area = article.querySelector('.edit-area');
