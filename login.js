@@ -2,13 +2,12 @@
 // Stockage : localStorage
 //  - fb_users : { [username]: { passHash, avatarDataUrl, createdAt } }
 //  - fb_session : { username }
-// Sécurité : hash SHA-256 côté client (basique pour démo)
+// Sécurité : hash SHA-256 côté client (démo)
 
 const STORAGE_USERS = 'fb_users';
 const STORAGE_SESSION = 'fb_session';
 
-// Utils ----------
-
+// ---------- Utils
 async function sha256(text) {
   const enc = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest('SHA-256', enc);
@@ -23,10 +22,12 @@ function saveUsers(u) {
 }
 function setSession(username) {
   localStorage.setItem(STORAGE_SESSION, JSON.stringify({ username, at: Date.now() }));
+  window.dispatchEvent(new CustomEvent('fb:login', { detail: { username } })); // <- notif login
   renderAuthSlot();
 }
 function clearSession() {
   localStorage.removeItem(STORAGE_SESSION);
+  window.dispatchEvent(new Event('fb:logout')); // <- notif logout
   renderAuthSlot();
 }
 function getSession() {
@@ -41,7 +42,7 @@ function dataUrlFromFile(file) {
   });
 }
 
-// UI Helpers ----------
+// ---------- UI helpers
 function toast(msg) {
   const el = document.createElement('div');
   el.className = 'toast';
@@ -59,40 +60,28 @@ function renderAuthSlot() {
       <span class="badge">Connecté : <strong>${sess.username}</strong></span>
       <button class="btn-small" id="logout-btn">Se déconnecter</button>
     `;
-    slot.querySelector('#logout-btn').onclick = () => {
+    const btn = slot.querySelector('#logout-btn');
+    btn && (btn.onclick = () => {
       clearSession();
       toast('Déconnecté.');
-      // Option : si on est sur feed.html, on reste ; sur profil.html on peut rafraîchir
       if (location.pathname.endsWith('profil.html')) location.reload();
-    };
+    });
   } else {
     slot.innerHTML = `<a class="btn-small" href="login.html">Se connecter</a>`;
   }
 }
 
-// Actions ----------
-
-// Création de compte
+// ---------- Actions
 async function handleSignup() {
-  const username = document.getElementById('su-username').value.trim();
-  const password = document.getElementById('su-password').value;
-  const avatarFile = document.getElementById('su-avatar').files?.[0];
+  const username = document.getElementById('su-username')?.value.trim();
+  const password = document.getElementById('su-password')?.value;
+  const avatarFile = document.getElementById('su-avatar')?.files?.[0];
 
-  // validations
-  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-    toast('Pseudo invalide (3–20, lettres/chiffres/_).');
-    return;
-  }
-  if (!password || password.length < 6) {
-    toast('Mot de passe trop court (min 6).');
-    return;
-  }
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { toast('Pseudo invalide (3–20, lettres/chiffres/_).'); return; }
+  if (!password || password.length < 6) { toast('Mot de passe trop court (min 6).'); return; }
 
   const users = loadUsers();
-  if (users[username]) {
-    toast('Ce pseudo est déjà pris.');
-    return;
-  }
+  if (users[username]) { toast('Ce pseudo est déjà pris.'); return; }
 
   const passHash = await sha256(password);
   let avatarDataUrl = '';
@@ -100,34 +89,25 @@ async function handleSignup() {
     try { avatarDataUrl = await dataUrlFromFile(avatarFile); } catch {}
   }
 
-  users[username] = {
-    passHash,
-    avatarDataUrl,
-    createdAt: new Date().toISOString()
-  };
+  users[username] = { passHash, avatarDataUrl, createdAt: new Date().toISOString() };
   saveUsers(users);
   setSession(username);
   toast('Compte créé et connecté !');
 
-  // redirection si "next" dans l’URL
   const next = new URLSearchParams(location.search).get('next');
   location.href = next || 'profil.html';
 }
 
-// Connexion
 async function handleLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
+  const username = document.getElementById('login-username')?.value.trim();
+  const password = document.getElementById('login-password')?.value;
 
   const users = loadUsers();
   const u = users[username];
   if (!u) { toast('Utilisateur introuvable.'); return; }
 
   const passHash = await sha256(password);
-  if (passHash !== u.passHash) {
-    toast('Mot de passe incorrect.');
-    return;
-  }
+  if (passHash !== u.passHash) { toast('Mot de passe incorrect.'); return; }
 
   setSession(username);
   toast('Connecté !');
@@ -135,7 +115,7 @@ async function handleLogin() {
   location.href = next || 'profil.html';
 }
 
-// Protection optionnelle d’une page : à appeler en haut d’une page protégée
+// ---------- Protection
 function requireLogin() {
   const sess = getSession();
   if (!sess?.username) {
@@ -144,16 +124,16 @@ function requireLogin() {
   }
 }
 
-// Bind UI si présent
+// ---------- Bind DOM
 document.addEventListener('DOMContentLoaded', () => {
   renderAuthSlot();
 
   const suBtn = document.getElementById('btn-signup');
-  if (suBtn) suBtn.addEventListener('click', handleSignup);
+  suBtn && suBtn.addEventListener('click', handleSignup);
 
   const lgBtn = document.getElementById('btn-login');
-  if (lgBtn) lgBtn.addEventListener('click', handleLogin);
+  lgBtn && lgBtn.addEventListener('click', handleLogin);
 });
 
-// Expose quelques fonctions globales si besoin ailleurs
+// Expose
 window.fbAuth = { getSession, clearSession, requireLogin };
