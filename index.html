@@ -1,18 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FaceBird 🐦</title>
+  <meta charset="utf-8">
+  <base href="./"><!-- IMPORTANT pour PWA + GitHub Pages -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FaceBird 🐦 - Accueil</title>
 
+  <!-- Manifest + thème -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1976d2">
 
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- ton contenu ici -->
+  <header>
+    <h1>🐦 FaceBird</h1>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="feed.html">Fil</a>
+      <a href="observations.html">Observations</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="profil.html">Profil</a>
+      <a href="carte.html">Carte</a>
+    </nav>
+  </header>
 
+  <main>
+    <h2>Bienvenue sur FaceBird</h2>
+    <p>Publie tes observations d’oiseaux, gagne des points et explore la carte !</p>
+  </main>
+
+  <!-- scripts de l’app -->
+  <script src="nav.js" defer></script>
+  <!-- enregistrement du service worker -->
   <script src="sw-register.js" defer></script>
 </body>
 </html>
