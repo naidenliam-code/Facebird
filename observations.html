@@ -2,235 +2,61 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FaceBird 🐦 - Observations</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
-
-  <!-- PWA / Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1e73e8">
-  <link rel="apple-touch-icon" href="icon-192.png">
-
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="description" content="Ajoute tes observations d’oiseaux (avec photo et position GPS) et gagne des points.">
+  <meta name="theme-color" content="#1976d2">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>📸 Observations</h1>
-    <p>Partage tes découvertes ornithologiques</p>
+  <header id="site-nav">
+    <div class="nav-inner">
+      <div class="nav-left">
+        <span class="brand">🐦 FaceBird</span>
+        <div class="links">
+          <a href="index.html">Accueil</a>
+          <a href="feed.html">Fil</a>
+          <a href="observations.html" aria-current="page">Observations</a>
+          <a href="quiz.html">Quiz</a>
+          <a href="profil.html">Profil</a>
+          <a href="carte.html">Carte</a>
+        </div>
+      </div>
+      <span id="auth-slot"></span>
+    </div>
   </header>
 
-  <nav>
-    <a href="index.html">Accueil</a>
-    <a href="feed.html">Fil</a>
-    <a class="active" href="observations.html">Observations</a>
-    <a href="quiz.html">Quiz</a>
-    <a href="profil.html">Profil</a>
-    <a href="map.html">Carte</a>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
-  </nav>
-
   <main class="container">
-    <!-- Formulaire -->
-    <div class="card">
-      <h2>➕ Ajouter une observation</h2>
-      <form id="obs-form">
-        <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-          <label>Espèce
-            <input name="espece" required placeholder="Mésange bleue">
-          </label>
-          <label>Lieu / Contexte (badge)
-            <input name="lieu" placeholder="Jardin, Parc, Forêt…">
-          </label>
-          <label>Date
-            <input name="date" type="date">
-          </label>
-        </div>
+    <h1>🪶 Mes observations</h1>
 
-        <label style="display:block;margin-top:10px">Description
-          <textarea name="desc" rows="3" placeholder="Comportement, météo, etc."></textarea>
-        </label>
+    <section class="card">
+      <h2>Nouvelle observation</h2>
+      <div class="row">
+        <input id="obs-species" type="text" placeholder="Espèce (ex: Mésange bleue)">
+        <input id="obs-date" type="date">
+        <input id="obs-time" type="time">
+      </div>
+      <div class="row">
+        <textarea id="obs-notes" placeholder="Notes (lieu, météo, nombre, etc.)" rows="3"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn" id="obs-save">Enregistrer</button>
+      </div>
+      <p class="muted">Chaque enregistrement publie aussi un post dans le Fil d’actualité (local, hors-ligne OK).</p>
+    </section>
 
-        <!-- 📷 Photo -->
-        <label style="display:block;margin-top:10px">
-          Photo de l’oiseau
-          <input type="file" id="obs-photo" accept="image/*" capture="environment">
-        </label>
-        <div id="photo-preview" style="margin-top:10px"></div>
-
-        <!-- GPS -->
-        <div style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;align-items:center">
-          <button id="obs-gps-btn" class="btn" type="button">📍 Ajouter ma position</button>
-          <small id="geo-status" class="muted" style="margin-left:6px"></small>
-        </div>
-        <input id="obs-lat" type="hidden" name="lat">
-        <input id="obs-lng" type="hidden" name="lng">
-
-        <div style="display:flex;gap:10px;margin:8px 0">
-          <button class="btn" type="submit">Ajouter</button>
-          <button id="clear-obs" class="btn" type="button">🗑 Effacer mes observations</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Liste d’observations -->
-    <div id="obs-list" class="grid"></div>
+    <section class="card">
+      <h2>Historique</h2>
+      <div id="obs-list"><p class="muted">Aucune observation pour le moment.</p></div>
+    </section>
   </main>
 
-  <footer>Créé par <b>Liam 👑</b></footer>
-
-  <!-- Scripts -->
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
-
-  <script>
-  (function(){
-    const KEY = 'fb-observations-v1';
-    const form = document.querySelector('#obs-form');
-    const listEl = document.querySelector('#obs-list');
-    const gpsBtn = document.querySelector('#obs-gps-btn');
-    const latInput = document.querySelector('#obs-lat');
-    const lngInput = document.querySelector('#obs-lng');
-    const clearBtn = document.querySelector('#clear-obs');
-    const geoStatus = document.getElementById('geo-status');
-    const photoInput = document.getElementById('obs-photo');
-    const photoPreview = document.getElementById('photo-preview');
-
-    const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
-    const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
-
-    function normalize(arr){
-      let changed = false;
-      arr.forEach(o=>{
-        if (!o.id){ o.id = 'o' + (o.ts || Date.now()) + Math.floor(Math.random()*1000); changed = true; }
-        if (typeof o.likes !== 'number'){ o.likes = 0; changed = true; }
-        if (!Array.isArray(o.comments)){ o.comments = []; changed = true; }
-      });
-      if (changed) save(arr);
-      return arr;
-    }
-
-    function render(){
-      const arr = normalize(load()).sort((a,b)=> (b.ts||0)-(a.ts||0));
-      if (!arr.length){
-        listEl.innerHTML = `<div class="card empty">Aucune observation encore. Ajoute ta première avec le formulaire ci-dessus !</div>`;
-        return;
-      }
-      listEl.innerHTML = arr.map(o => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
-            <div>
-              <strong>${esc(o.espece)}</strong>
-              ${o.lieu ? `<span class="badge">${esc(o.lieu)}</span>`:''}
-              ${typeof o.lat==='number' && typeof o.lng==='number' ? `<span class="badge">GPS ✔</span>`:''}
-              <small class="muted">• ${esc(o.date || '')}</small>
-            </div>
-            <small class="muted">${new Date(o.ts||Date.now()).toLocaleString()}</small>
-          </div>
-          ${o.photo ? `<img src="${o.photo}" alt="photo" style="max-width:100%;border-radius:10px;margin-top:8px"/>` : ''}
-          <p style="margin:.4rem 0 0">${esc(o.desc || '—')}</p>
-          <div class="muted" style="margin-top:6px">${o.likes||0} like(s) • ${o.comments?.length||0} commentaire(s)</div>
-        </div>
-      `).join('');
-    }
-
-    function addObservation(data){
-      const arr = load();
-      arr.unshift({
-        id: 'o' + Date.now() + Math.floor(Math.random()*1000),
-        ts: Date.now(),
-        espece: data.espece.trim(),
-        lieu: (data.lieu||'').trim(),
-        date: (data.date||'').trim(),
-        desc: (data.desc||'').trim(),
-        lat: data.lat != null ? Number(data.lat) : undefined,
-        lng: data.lng != null ? Number(data.lng) : undefined,
-        photo: data.photo || null,
-        likes: 0,
-        comments: []
-      });
-      save(arr);
-    }
-
-    // Gestion photo preview (en base64)
-    let photoData = null;
-    photoInput?.addEventListener('change', ()=>{
-      const file = photoInput.files[0];
-      if (!file) { photoPreview.innerHTML=''; photoData=null; return; }
-      const reader = new FileReader();
-      reader.onload = e=>{
-        photoData = e.target.result;
-        photoPreview.innerHTML = `<img src="${photoData}" alt="aperçu" style="max-width:180px;border-radius:10px"/>`;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // date par défaut aujourd’hui
-    document.addEventListener('DOMContentLoaded', ()=>{
-      if (form?.date && !form.date.value){
-        form.date.value = new Date().toISOString().slice(0,10);
-      }
-      render();
-    });
-
-    form?.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      const d = {
-        espece: form.espece.value,
-        lieu: form.lieu.value,
-        date: form.date.value,
-        desc: form.desc.value,
-        lat: latInput?.value ? Number(latInput.value) : undefined,
-        lng: lngInput?.value ? Number(lngInput.value) : undefined,
-        photo: photoData
-      };
-      if (!d.espece.trim()){
-        alert("Indique au moins l'espèce ✍️"); return;
-      }
-      addObservation(d);
-      FB_POINTS?.add('observation');
-      form.reset();
-      photoPreview.innerHTML='';
-      photoData=null;
-      if (form?.date) form.date.value = new Date().toISOString().slice(0,10);
-      if (latInput) latInput.value = '';
-      if (lngInput) lngInput.value = '';
-      if (geoStatus) geoStatus.textContent = '';
-      render();
-    });
-
-    gpsBtn?.addEventListener('click', ()=>{
-      if (!navigator.geolocation){
-        alert("La géolocalisation n'est pas disponible.");
-        return;
-      }
-      geoStatus.textContent = "Recherche de la position…";
-      navigator.geolocation.getCurrentPosition(pos=>{
-        const { latitude, longitude } = pos.coords;
-        if (latInput) latInput.value = String(latitude);
-        if (lngInput) lngInput.value = String(longitude);
-        geoStatus.textContent = `Position ajoutée ✔ (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-        FB_POINTS?.add('gps_used');
-      }, err=>{
-        geoStatus.textContent = "Impossible d’obtenir la position ❌";
-      }, { enableHighAccuracy:true, timeout: 10000, maximumAge: 0 });
-    });
-
-    clearBtn?.addEventListener('click', ()=>{
-      if (!confirm("Effacer toutes tes observations locales ?")) return;
-      localStorage.removeItem(KEY);
-      render();
-    });
-  })();
-  </script>
-
-  <!-- PWA -->
-  <script src="sw-register.js" defer></script>
+  <!-- scripts -->
+  <script src="login.js" defer></script>
+  <script src="observations.js" defer></script>
   <script src="install-check.js" defer></script>
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
