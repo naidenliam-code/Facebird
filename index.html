@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <base href="./"><!-- IMPORTANT pour PWA + GitHub Pages -->
+  <base href="./"><!-- important pour GitHub Pages et PWA -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FaceBird 🐦 - Accueil</title>
 
-  <!-- Manifest + thème -->
+  <!-- Manifest et thème -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1976d2">
 
@@ -14,10 +14,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- barre de navigation -->
   <header>
     <h1>🐦 FaceBird</h1>
     <nav>
-      <a href="index.html">Accueil</a>
+      <a href="index.html" aria-current="page">Accueil</a>
       <a href="feed.html">Fil</a>
       <a href="observations.html">Observations</a>
       <a href="quiz.html">Quiz</a>
@@ -26,13 +28,32 @@
     </nav>
   </header>
 
+  <!-- contenu principal -->
   <main>
-    <h2>Bienvenue sur FaceBird</h2>
-    <p>Publie tes observations d’oiseaux, gagne des points et explore la carte !</p>
+    <section class="hero">
+      <h2>Bienvenue sur FaceBird</h2>
+      <p>Publie tes observations d’oiseaux, gagne des points 🧩 et explore la carte 🌍 !</p>
+
+      <div class="actions">
+        <a class="btn" href="observations.html">➕ Nouvelle observation</a>
+        <a class="btn" href="feed.html">📰 Voir le fil</a>
+        <a class="btn" href="quiz.html">🎯 Lancer un quiz</a>
+        <a class="btn" href="carte.html">🗺️ Carte</a>
+      </div>
+    </section>
+
+    <section class="install-hint">
+      <h3>📲 Installer FaceBird</h3>
+      <p>Installe FaceBird comme une vraie app pour un accès rapide et le mode hors-ligne.</p>
+    </section>
   </main>
 
-  <!-- scripts de l’app -->
+  <!-- scripts -->
   <script src="nav.js" defer></script>
+  <script src="badges.js" defer></script>
+  <script src="points.js" defer></script>
+  <script src="install-check.js" defer></script>
+
   <!-- enregistrement du service worker -->
   <script src="sw-register.js" defer></script>
 </body>
