@@ -1,107 +1,82 @@
-// FaceBird - Observations avec persistance + GPS optionnel
-document.addEventListener('DOMContentLoaded', () => {
-  const STORAGE_KEY = 'fb-observations-v1';
+// observations.js — Observations locales + publication auto dans le Fil
 
-  const form = document.getElementById('obs-form');
-  const grid = document.getElementById('obs-grid');
-  const clearBtn = document.getElementById('clear-obs');
-  const dateInput = form?.querySelector('input[name="date"]');
-  const latInput = form?.querySelector('input[name="lat"]');
-  const lngInput = form?.querySelector('input[name="lng"]');
-  const geoBtn   = document.getElementById('geo-btn');
-  const geoInfo  = document.getElementById('geo-status');
+(function () {
+  const keyObs = 'fb_observations';
+  const keyFeed = 'facebird_posts';
 
-  // --- stockage ---
-  const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } };
-  const save = (list) => localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  const $ = (s) => document.querySelector(s);
+  const listEl = $('#obs-list');
 
-  // --- sécurité HTML ---
-  const escapeHtml = (str='') => String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[s]));
+  let items = [];
 
-  // --- rendu d'une carte ---
-  function addCardFromObj(obs, prepend=false){
-    const card = document.createElement('div');
-    card.className = 'card';
-    const hasGPS = (typeof obs.lat === 'number' && typeof obs.lng === 'number');
-    card.innerHTML = `
-      <h3>🐦 ${escapeHtml(obs.espece)}</h3>
-      <p>
-        <span class="badge">${escapeHtml(obs.lieu)}</span> • ${escapeHtml(obs.date)}
-        ${hasGPS ? ` • <span class="badge">GPS ✔</span>` : ``}
-      </p>
-      <p>${escapeHtml(obs.desc)}</p>
-    `;
-    prepend ? grid.prepend(card) : grid.append(card);
+  // ---------- Chargement / Sauvegarde ----------
+  function load() {
+    try { items = JSON.parse(localStorage.getItem(keyObs) || '[]'); }
+    catch { items = []; }
+  }
+  function save() {
+    localStorage.setItem(keyObs, JSON.stringify(items));
   }
 
-  // --- date par défaut ---
-  if (dateInput && !dateInput.value) {
-    dateInput.value = new Date().toISOString().slice(0,10);
+  // ---------- Ajout dans le Fil ----------
+  function addToFeed(text) {
+    let feed = [];
+    try { feed = JSON.parse(localStorage.getItem(keyFeed) || '[]'); } catch { feed = []; }
+    const post = { text, date: new Date().toLocaleString() };
+    feed.unshift(post);
+    localStorage.setItem(keyFeed, JSON.stringify(feed));
   }
 
-  // --- rendu initial ---
-  const initial = load();
-  if (initial.length) initial.forEach(obs => addCardFromObj(obs, true));
-
-  // --- GPS : récupérer la position ---
-  geoBtn?.addEventListener('click', () => {
-    if (!('geolocation' in navigator)) {
-      geoInfo.textContent = "GPS non supporté ❌";
+  // ---------- Rendu ----------
+  function render() {
+    if (!items.length) {
+      listEl.innerHTML = '<p class="muted">Aucune observation pour le moment.</p>';
       return;
     }
-    geoInfo.textContent = "Recherche de la position…";
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const { latitude, longitude } = pos.coords;
-      if (latInput) latInput.value = String(latitude);
-      if (lngInput) lngInput.value = String(longitude);
-      geoInfo.textContent = `Position ajoutée ✔ (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-    }, () => {
-      geoInfo.textContent = "Impossible d’obtenir la position ❌";
-    }, { enableHighAccuracy:true, timeout: 8000, maximumAge: 0 });
+    listEl.innerHTML = items.map(o => `
+      <div class="post">
+        <p><strong>🪶 ${o.species}</strong> — ${o.date}${o.time ? ' ' + o.time : ''}</p>
+        ${o.notes ? `<p>${o.notes.replace(/\n/g, '<br>')}</p>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // ---------- Nouveau / Enregistrer ----------
+  function handleSave() {
+    const species = $('#obs-species').value.trim();
+    const date    = $('#obs-date').value || new Date().toISOString().slice(0,10);
+    const time    = $('#obs-time').value || '';
+    const notes   = $('#obs-notes').value.trim();
+
+    if (!species) return;
+
+    const obs = { species, date, time, notes };
+    items.unshift(obs);
+    save();
+
+    // ➜ Publier automatiquement dans le Fil
+    const lines = [
+      `🪶 Observation : ${species}`,
+      `📅 ${date}${time ? ' ' + time : ''}`,
+      notes ? `📝 ${notes}` : null
+    ].filter(Boolean);
+    addToFeed(lines.join('\n'));
+
+    // Reset UI
+    $('#obs-species').value = '';
+    $('#obs-notes').value   = '';
+    render();
+  }
+
+  // ---------- Init ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    // Protection : nécessite une session si fbAuth est dispo
+    if (window.fbAuth?.requireLogin) window.fbAuth.requireLogin();
+
+    load();
+    render();
+
+    const saveBtn = document.getElementById('obs-save');
+    saveBtn && saveBtn.addEventListener('click', handleSave);
   });
-
-  // --- soumission du formulaire ---
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const data = new FormData(form);
-    const espece = (data.get('espece')||'').toString().trim();
-    if (!espece) return;
-
-    // convertir lat/lng si présents
-    const latVal = (data.get('lat')||'').toString().trim();
-    const lngVal = (data.get('lng')||'').toString().trim();
-    const lat = latVal ? Number(latVal) : null;
-    const lng = lngVal ? Number(lngVal) : null;
-
-    const obs = {
-      espece,
-      lieu: (data.get('lieu')||'Lieu').toString().trim() || 'Lieu',
-      date: (data.get('date')||'').toString() || 'Aujourd’hui',
-      desc: (data.get('desc')||'—').toString().trim() || '—',
-      ts: Date.now(),
-      ...(Number.isFinite(lat) && Number.isFinite(lng) ? {lat, lng} : {})
-    };
-
-    addCardFromObj(obs, true);
-    const list = load(); list.unshift(obs); save(list);
-
-    // Badges
-    if (window.FB_BADGES){
-      window.FB_BADGES.incCount();
-      const sp = (obs.espece || '').toLowerCase();
-      if (sp.includes('hibou'))                    window.FB_BADGES.award('owl_spot');
-      if (sp.includes('mésange') || sp.includes('mesange')) window.FB_BADGES.award('mesange');
-      if (sp.includes('pigeon'))                   window.FB_BADGES.award('pigeon');
-    }
-
-    form.reset();
-    if (dateInput) dateInput.value = new Date().toISOString().slice(0,10);
-    if (geoInfo) geoInfo.textContent = ""; // reset message GPS
-  });
-
-  // --- bouton effacer ---
-  clearBtn?.addEventListener('click', () => {
-    localStorage.removeItem(STORAGE_KEY);
-    grid.querySelectorAll('.card').forEach(n => n.remove());
-  });
-});
+})();
