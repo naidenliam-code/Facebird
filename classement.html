@@ -25,52 +25,25 @@
   </header>
 
   <main class="container" style="max-width:960px">
-    <h1>🏆 Classement</h1>
-    <p class="muted">Découvre les meilleurs observateurs d’oiseaux sur FaceBird.</p>
+    <h1>🏆 Classement des observateurs</h1>
+    <p class="muted">Découvre les meilleurs explorateurs d’oiseaux sur FaceBird.</p>
 
-    <section id="top3" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></section>
+    <section id="top3" class="grid"
+      style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:16px"></section>
 
-    <div class="row between center" style="margin-top:18px">
-      <div class="row gap">
-        <label>
-          🔎
-          <input id="search" type="search" placeholder="Rechercher un pseudo…" />
-        </label>
-        <label>
-          Trier :
-          <select id="sort">
-            <option value="points-desc">Points (↓)</option>
-            <option value="points-asc">Points (↑)</option>
-            <option value="name-asc">Pseudo (A→Z)</option>
-            <option value="name-desc">Pseudo (Z→A)</option>
-          </select>
-        </label>
-      </div>
-      <small id="meBadge" class="muted"></small>
+    <div class="card" style="margin-top:20px">
+      <table class="table" id="classementTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Joueur</th>
+            <th class="right">Points</th>
+            <th class="right">Observations</th>
+          </tr>
+        </thead>
+        <tbody id="classementBody"></tbody>
+      </table>
     </div>
-
-    <div class="card" style="margin-top:12px">
-      <div class="table-responsive">
-        <table id="tbl" class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Joueur</th>
-              <th class="right">Points</th>
-              <th class="right">Niveau</th>
-              <th class="right">Observations</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <p class="muted" style="margin-top:8px">
-      Astuce : tes points se gagnent en postant des observations, réagissant aux posts,
-      et en réalisant des actions utiles (quizz, etc.). Le classement se met à jour
-      automatiquement sur cet appareil.
-    </p>
   </main>
 
   <script src="classement.js" defer></script>
