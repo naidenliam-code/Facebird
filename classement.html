@@ -5,48 +5,43 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FaceBird 🐦 – Classement</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#1976d2" />
 </head>
 <body>
-  <header class="app-header">
-    <div class="container row between center">
-      <a class="brand" href="index.html">🐦 FaceBird</a>
-      <nav class="tabs">
-        <a href="index.html">Accueil</a>
-        <a href="feed.html">Fil</a>
-        <a href="observations.html">Observations</a>
-        <a href="quiz.html">Quiz</a>
-        <a href="profil.html">Profil</a>
-        <a class="active" href="classement.html">Classement</a>
-        <a href="map.html">Carte</a>
-      </nav>
-    </div>
-  </header>
+  <!-- nav insérée par nav.js (ou garde ta nav statique si tu préfères) -->
+  <main class="container">
+    <h1>🏆 Classement</h1>
+    <p class="subtitle">Les membres avec le plus de points.</p>
 
-  <main class="container" style="max-width:960px">
-    <h1>🏆 Classement des observateurs</h1>
-    <p class="muted">Découvre les meilleurs explorateurs d’oiseaux sur FaceBird.</p>
+    <div class="card p-3">
+      <div class="row gap-2">
+        <input id="search" class="input" placeholder="Recherche par pseudo…" />
+        <select id="filter" class="input">
+          <option value="all">Tous</option>
+          <option value="top10">Top 10</option>
+          <option value="top50">Top 50</option>
+        </select>
+      </div>
 
-    <section id="top3" class="grid"
-      style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:16px"></section>
-
-    <div class="card" style="margin-top:20px">
-      <table class="table" id="classementTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Joueur</th>
-            <th class="right">Points</th>
-            <th class="right">Observations</th>
-          </tr>
-        </thead>
-        <tbody id="classementBody"></tbody>
-      </table>
+      <div class="table-scroll mt-3">
+        <table class="table" id="board">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Utilisateur</th>
+              <th>Points</th>
+              <th>Posts</th>
+              <th>Obs.</th>
+            </tr>
+          </thead>
+          <tbody id="board-body">
+            <!-- rempli par classement.js -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
+  <script src="nav.js" defer></script>
   <script src="classement.js" defer></script>
-  <script src="sw-register.js" defer></script>
 </body>
 </html>
