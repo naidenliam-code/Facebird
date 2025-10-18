@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FaceBird 🐦 – Classement</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1976d2" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="container row between center">
+      <a class="brand" href="index.html">🐦 FaceBird</a>
+      <nav class="tabs">
+        <a href="index.html">Accueil</a>
+        <a href="feed.html">Fil</a>
+        <a href="observations.html">Observations</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="profil.html">Profil</a>
+        <a class="active" href="classement.html">Classement</a>
+        <a href="map.html">Carte</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="max-width:960px">
+    <h1>🏆 Classement</h1>
+    <p class="muted">Découvre les meilleurs observateurs d’oiseaux sur FaceBird.</p>
+
+    <section id="top3" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px"></section>
+
+    <div class="row between center" style="margin-top:18px">
+      <div class="row gap">
+        <label>
+          🔎
+          <input id="search" type="search" placeholder="Rechercher un pseudo…" />
+        </label>
+        <label>
+          Trier :
+          <select id="sort">
+            <option value="points-desc">Points (↓)</option>
+            <option value="points-asc">Points (↑)</option>
+            <option value="name-asc">Pseudo (A→Z)</option>
+            <option value="name-desc">Pseudo (Z→A)</option>
+          </select>
+        </label>
+      </div>
+      <small id="meBadge" class="muted"></small>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="table-responsive">
+        <table id="tbl" class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Joueur</th>
+              <th class="right">Points</th>
+              <th class="right">Niveau</th>
+              <th class="right">Observations</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:8px">
+      Astuce : tes points se gagnent en postant des observations, réagissant aux posts,
+      et en réalisant des actions utiles (quizz, etc.). Le classement se met à jour
+      automatiquement sur cet appareil.
+    </p>
+  </main>
+
+  <script src="classement.js" defer></script>
+  <script src="sw-register.js" defer></script>
+</body>
+</html>
