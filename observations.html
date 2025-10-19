@@ -1,62 +1,42 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <base href="./">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FaceBird 🐦 - Observations</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FaceBird 🐦 – Observations</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1976d2">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header id="site-nav">
-    <div class="nav-inner">
-      <div class="nav-left">
-        <span class="brand">🐦 FaceBird</span>
-        <div class="links">
-          <a href="index.html">Accueil</a>
-          <a href="feed.html">Fil</a>
-          <a href="observations.html" aria-current="page">Observations</a>
-          <a href="quiz.html">Quiz</a>
-          <a href="profil.html">Profil</a>
-          <a href="carte.html">Carte</a>
-        </div>
-      </div>
-      <span id="auth-slot"></span>
-    </div>
-  </header>
-
   <main class="container">
-    <h1>🪶 Mes observations</h1>
+    <h1>📝 Nouvelle observation</h1>
 
-    <section class="card">
-      <h2>Nouvelle observation</h2>
-      <div class="row">
-        <input id="obs-species" type="text" placeholder="Espèce (ex: Mésange bleue)">
-        <input id="obs-date" type="date">
-        <input id="obs-time" type="time">
+    <form id="obs-form" class="card">
+      <label>Espèce
+        <input type="text" id="species" required placeholder="Mésange charbonnière…">
+      </label>
+      <label>Lieu
+        <input type="text" id="location" required placeholder="Parc, ville…">
+      </label>
+      <label>Date
+        <input type="date" id="date" required>
+      </label>
+      <label>Notes
+        <textarea id="notes" rows="3" placeholder="Comportement, météo…"></textarea>
+      </label>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <input type="file" id="photo" accept="image/*">
+        <button class="btn" type="submit">Enregistrer</button>
       </div>
-      <div class="row">
-        <textarea id="obs-notes" placeholder="Notes (lieu, météo, nombre, etc.)" rows="3"></textarea>
-      </div>
-      <div class="row">
-        <button class="btn" id="obs-save">Enregistrer</button>
-      </div>
-      <p class="muted">Chaque enregistrement publie aussi un post dans le Fil d’actualité (local, hors-ligne OK).</p>
-    </section>
+    </form>
 
-    <section class="card">
-      <h2>Historique</h2>
-      <div id="obs-list"><p class="muted">Aucune observation pour le moment.</p></div>
-    </section>
+    <h2 style="margin-top:1rem">Dernières observations</h2>
+    <div id="obs-list" class="stack"></div>
   </main>
 
-  <!-- scripts -->
-  <script src="login.js" defer></script>
+  <script src="nav.js" defer></script>
   <script src="observations.js" defer></script>
-  <script src="install-check.js" defer></script>
   <script src="sw-register.js" defer></script>
 </body>
 </html>
