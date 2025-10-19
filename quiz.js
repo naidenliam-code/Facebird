@@ -1,102 +1,107 @@
-// FaceBird - Quiz 15 questions + difficulté + meilleur score + badges + points
-(function(){
-  const QKEY = 'fb-quiz-best';
-  const $ = (sel) => document.querySelector(sel);
+// quiz.js — FaceBird (remplacement complet)
+(function () {
+  const root = document.getElementById('quiz');
+  if (!root) {
+    console.error('[Quiz] Élément #quiz introuvable. Vérifie quiz.html');
+    return;
+  }
 
-  const QUESTIONS = [
-    // Facile (5)
-    { q: "Quel oiseau a une poitrine orange et est commun dans les jardins européens ?", choices: ["Moineau domestique", "Rouge-gorge", "Goéland"], answer: 1, difficulty:"Facile" },
-    { q: "Quel oiseau de ville est souvent confondu avec la tourterelle ?", choices: ["Pigeon ramier", "Corneille noire", "Faucon pèlerin"], answer: 0, difficulty:"Facile" },
-    { q: "Le merle noir est…", choices: ["Toujours brun", "Mâle noir, femelle brune", "Toujours blanc"], answer: 1, difficulty:"Facile" },
-    { q: "Quel oiseau nocturne a de grands yeux et chasse la nuit ?", choices: ["Hibou", "Hirondelle", "Pie"], answer: 0, difficulty:"Facile" },
-    { q: "Quel oiseau accroche ses nids sous les toits au printemps ?", choices: ["Hirondelle", "Pingouin", "Mésange"], answer: 0, difficulty:"Facile" },
-    // Moyen (5)
-    { q: "Quel oiseau marin plonge et peut rester longtemps sous l’eau ?", choices: ["Cormoran", "Moineau", "Pie"], answer: 0, difficulty:"Moyen" },
-    { q: "Quel oiseau chante au lever du soleil et est symbole du matin ?", choices: ["Rossignol", "Coq", "Mésange charbonnière"], answer: 1, difficulty:"Moyen" },
-    { q: "Quel rapace est capable de fondre en piqué à plus de 300 km/h ?", choices: ["Buse variable", "Faucon pèlerin", "Aigle royal"], answer: 1, difficulty:"Moyen" },
-    { q: "Quel petit oiseau jaune et vert est très présent en hiver aux mangeoires ?", choices: ["Chardonneret élégant", "Verdier", "Troglodyte mignon"], answer: 1, difficulty:"Moyen" },
-    { q: "Quel oiseau a un bec rouge et noir, et niche souvent dans les clochers ?", choices: ["Cigogne blanche", "Huppe fasciée", "Tourterelle turque"], answer: 0, difficulty:"Moyen" },
-    // Difficile (5)
-    { q: "Quel oiseau imite les sons de son environnement, y compris d’autres oiseaux ?", choices: ["Geai des chênes", "Mésange bleue", "Pigeon ramier"], answer: 0, difficulty:"Difficile" },
-    { q: "Quel oiseau migrateur vole chaque année de l’Arctique à l’Antarctique ?", choices: ["Sterne arctique", "Albatros hurleur", "Hirondelle rustique"], answer: 0, difficulty:"Difficile" },
-    { q: "Quel oiseau rare a une huppe orange et noire et un cri ‘oup-oup-oup’ ?", choices: ["Huppe fasciée", "Pic épeiche", "Ibis sacré"], answer: 0, difficulty:"Difficile" },
-    { q: "Quel oiseau plane en V lors des migrations et émet des cris sonores ?", choices: ["Grue cendrée", "Canard colvert", "Goéland argenté"], answer: 0, difficulty:"Difficile" },
-    { q: "Quel oiseau de proie est l’emblème des États-Unis ?", choices: ["Aigle royal", "Pygargue à tête blanche", "Buse à queue rousse"], answer: 1, difficulty:"Difficile" }
+  // Jeu de questions démo (remplace/augmente à volonté)
+  const questions = [
+    {
+      q: "Quel oiseau a un chant très varié et imite d’autres espèces ?",
+      choices: ["Rouge-gorge", "Étourneau sansonnet", "Mésange bleue", "Hirondelle"],
+      correct: 1
+    },
+    {
+      q: "Quel rapace est souvent actif la nuit ?",
+      choices: ["Buse variable", "Épervier d’Europe", "Chouette hulotte", "Faucon crécerelle"],
+      correct: 2
+    },
+    {
+      q: "Le pic-vert se nourrit surtout…",
+      choices: ["De poissons", "D’insectes du bois", "De graines de conifères", "De nectar"],
+      correct: 1
+    }
   ];
 
-  const box = $('#quiz-box');
-  const bestEl = $('#best-score');
-  const startBtn = $('#start-btn');
+  // ——— UI de base
+  root.innerHTML = `
+    <div id="q-progress" style="height:10px;border-radius:8px;background:var(--surface-2,#f0f2f7);overflow:hidden;margin:.75rem 0 1rem;">
+      <div id="q-progress-bar" style="height:100%;width:0%;background:#1976d2;transition:width .25s;"></div>
+    </div>
+    <div id="q-card">
+      <h2 id="q-title" style="margin:0 0 .5rem 0"></h2>
+      <div id="q-choices" class="stack" style="gap:.5rem"></div>
+      <div id="q-footer" style="margin-top:1rem;opacity:.8"></div>
+    </div>
+  `;
 
-  const loadBest = () => Number(localStorage.getItem(QKEY) || '0') || 0;
-  const saveBest = (pct) => { const b=loadBest(); if (pct>b) localStorage.setItem(QKEY,String(pct)); };
-  const renderBest = () => { const b=loadBest(); bestEl.textContent = b ? `Meilleur score : ${b}%` : 'Meilleur score : —'; };
+  const $title   = root.querySelector('#q-title');
+  const $choices = root.querySelector('#q-choices');
+  const $footer  = root.querySelector('#q-footer');
+  const $bar     = root.querySelector('#q-progress-bar');
 
-  function renderQuestion(i, picks){
-    const q = QUESTIONS[i];
-    box.innerHTML = `
-      <p><b>Question ${i+1}/${QUESTIONS.length}</b> <span class="badge">${q.difficulty}</span></p>
-      <p>${q.q}</p>
-      <div id="choices"></div>
-      <div style="display:flex;gap:10px;margin-top:10px">
-        <button class="btn" id="prev" ${i===0?'disabled':''}>⬅ Précédent</button>
-        <button class="btn" id="next">${i===QUESTIONS.length-1?'Terminer ➡':'Suivant ➡'}</button>
-      </div>
-    `;
-    const choices = document.querySelector('#choices');
-    q.choices.forEach((c,idx)=>{
-      const checked = picks[i]===idx ? 'checked' : '';
-      choices.insertAdjacentHTML('beforeend', `
-        <label style="display:block;margin:6px 0">
-          <input type="radio" name="q${i}" value="${idx}" ${checked}> ${c}
-        </label>
-      `);
-    });
+  let index = 0;
+  let score = 0;
 
-    document.querySelector('#prev').addEventListener('click', ()=>{
-      const sel = box.querySelector(`input[name="q${i}"]:checked`);
-      if (sel) picks[i] = Number(sel.value);
-      renderQuestion(i-1, picks);
-    });
-    document.querySelector('#next').addEventListener('click', ()=>{
-      const sel = box.querySelector(`input[name="q${i}"]:checked`);
-      if (sel) picks[i] = Number(sel.value);
-      if (i===QUESTIONS.length-1) finish(picks);
-      else renderQuestion(i+1, picks);
-    });
-  }
+  function render() {
+    // Progrès
+    $bar.style.width = ((index / questions.length) * 100).toFixed(1) + '%';
 
-  function finish(picks){
-    let correct = 0;
-    QUESTIONS.forEach((q,i)=>{ if (picks[i]===q.answer) correct++; });
-    const pct = Math.round((correct/QUESTIONS.length)*100);
-    saveBest(pct);
-    renderBest();
-    box.innerHTML = `
-      <h3>Résultat : ${correct}/${QUESTIONS.length} (${pct}%)</h3>
-      <p class="muted">Tu peux recommencer pour améliorer ton meilleur score.</p>
-      <button class="btn" id="restart">↻ Rejouer</button>
-    `;
-    document.querySelector('#restart').addEventListener('click', start);
+    if (index >= questions.length) {
+      // Fin du quiz
+      $title.textContent = `Terminé ! Score : ${score}/${questions.length}`;
+      $choices.innerHTML = '';
+      $footer.innerHTML = `
+        <button class="btn" id="q-retry">Rejouer</button>
+        <a class="btn" href="feed.html">Aller au fil</a>
+      `;
+      root.querySelector('#q-retry').addEventListener('click', () => {
+        index = 0; score = 0; render();
+      });
 
-    if (window.FB_BADGES){
-      FB_BADGES.award('quiz_first');
-      if (pct >= 80) FB_BADGES.award('quiz_80');
-      if (pct === 100) FB_BADGES.award('quiz_perfect');
+      // (Optionnel) Donner des points FaceBird
+      try {
+        const pts = Number(localStorage.getItem('fb_points') || '0');
+        // +5 points par bonne réponse
+        localStorage.setItem('fb_points', String(pts + score * 5));
+      } catch (e) {}
+
+      return;
     }
-    // points
-    if (pct >= 100) FB_POINTS?.add('quiz_100');
-    else if (pct >= 80) FB_POINTS?.add('quiz_80');
+
+    const q = questions[index];
+    $title.textContent = `Q${index + 1}. ${q.q}`;
+    $choices.innerHTML = '';
+    q.choices.forEach((label, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = label;
+      btn.style.textAlign = 'left';
+      btn.addEventListener('click', () => submit(i));
+      $choices.appendChild(btn);
+    });
+
+    $footer.textContent = `Question ${index + 1} / ${questions.length}`;
   }
 
-  function start(){ 
-    const picks = []; 
-    renderQuestion(0, picks); 
-    FB_POINTS?.add('quiz_play');
+  function submit(choice) {
+    const q = questions[index];
+    const isCorrect = choice === q.correct;
+    if (isCorrect) score++;
+
+    // Petit feedback visuel
+    [...$choices.children].forEach((btn, i) => {
+      btn.disabled = true;
+      btn.style.opacity = '0.9';
+      btn.style.border = '1px solid transparent';
+      if (i === q.correct)   btn.style.borderColor = 'var(--ok,#19a974)';
+      if (i === choice && !isCorrect) btn.style.borderColor = 'var(--ko,#e53935)';
+    });
+
+    setTimeout(() => { index++; render(); }, 600);
   }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    renderBest();
-    startBtn?.addEventListener('click', start);
-  });
+  render();
 })();
