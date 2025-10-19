@@ -1,27 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FaceBird 🐦 – Accueil</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#1976d2">
 </head>
 <body>
   <main class="container">
     <h1>Bienvenue sur FaceBird</h1>
     <p>Publie tes observations d’oiseaux, gagne des points 🍀 et explore la carte 🌍 !</p>
 
-    <div class="actions">
-      <a href="observations.html" class="btn">🪶 Nouvelle observation</a>
-      <a href="feed.html" class="btn">📰 Voir le fil</a>
-      <a href="quiz.html" class="btn">🎯 Lancer un quiz</a>
-      <a href="map.html" class="btn">🗺️ Carte</a>
+    <div class="actions" style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <a class="btn" href="observations.html">📝 Nouvelle observation</a>
+      <a class="btn" href="feed.html">📰 Voir le fil</a>
+      <a class="btn" href="quiz.html">🎯 Lancer un quiz</a>
+      <a class="btn" href="map.html">🗺️ Carte</a>
     </div>
 
-    <h3>📱 Installer FaceBird</h3>
-    <p>Installe FaceBird comme une vraie app pour un accès rapide et le mode hors-ligne.</p>
+    <section style="margin-top:1rem">
+      <h2>📱 Installer FaceBird</h2>
+      <p>Installe FaceBird comme une vraie app pour un accès rapide et le mode hors-ligne.</p>
+    </section>
   </main>
 
+  <!-- Barre de navigation (injection) -->
   <script src="nav.js" defer></script>
+  <!-- SW register (si présent) -->
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
