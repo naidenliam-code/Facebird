@@ -1,6 +1,14 @@
-// carte.js — charge Leaflet avec repli + initialise la carte proprement
+// carte.js — charge Leaflet d'abord en local, puis fallback CDNs, puis initialise la carte.
 (function () {
-  // ---------- utils chargement dynamique ----------
+  // -------- helpers --------
+  function basePath() {
+    // ex: "/Facebird/" sur GitHub Pages
+    return new URL('./', self.location.href).pathname;
+  }
+  function b_join(p) {
+    // joint base + p (sans double slash)
+    return basePath().replace(/\/+$/,'') + '/' + String(p).replace(/^\/+/, '');
+  }
   function loadCSS(href) {
     return new Promise((resolve, reject) => {
       const link = document.createElement('link');
@@ -11,7 +19,6 @@
       document.head.appendChild(link);
     });
   }
-
   function loadJS(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -22,44 +29,49 @@
       document.head.appendChild(s);
     });
   }
-
   async function loadLeaflet() {
-    // Deux CDNs, on essaie dans l’ordre
-    const CSS_CANDIDATES = [
-      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'
+    const TRY = [
+      // 1) local
+      {
+        css: b_join('vendor/leaflet/leaflet.css') + '?v=1',
+        js:  b_join('vendor/leaflet/leaflet.js')  + '?v=1'
+      },
+      // 2) unpkg
+      {
+        css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css?v=1',
+        js:  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v=1'
+      },
+      // 3) jsDelivr
+      {
+        css: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css?v=1',
+        js:  'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js?v=1'
+      }
     ];
-    const JS_CANDIDATES = [
-      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
-    ];
-
-    let cssOk = false, jsOk = false, lastErr = null;
-
-    for (const u of CSS_CANDIDATES) {
-      try { await loadCSS(u + '?v=2'); cssOk = true; break; } catch (e) { lastErr = e; }
+    let lastErr;
+    for (const src of TRY) {
+      try {
+        await loadCSS(src.css);
+        await loadJS(src.js);
+        if (window.L) return; // succès
+      } catch (e) {
+        lastErr = e;
+      }
     }
-    for (const u of JS_CANDIDATES) {
-      try { await loadJS(u + '?v=2'); jsOk = true; break; } catch (e) { lastErr = e; }
-    }
-
-    if (!(cssOk && jsOk)) throw lastErr || new Error('Leaflet not loaded');
-    if (typeof window.L === 'undefined') throw new Error('Leaflet namespace missing');
+    throw lastErr || new Error('Leaflet not loaded');
   }
 
-  function fail(msg) {
-    console.warn('[Carte] ', msg);
-    const info = document.getElementById('map-empty');
-    if (info) {
-      info.textContent = msg;
-      info.style.display = 'block';
+  function showError(msg) {
+    console.warn('[Carte] ' + msg);
+    const p = document.getElementById('map-empty');
+    if (p) {
+      p.textContent = msg;
+      p.style.display = 'block';
     } else {
       alert(msg);
     }
   }
 
   function invalidateOnChanges(map) {
-    // Force la mise à jour de la taille (onglet rendu, resize, etc.)
     setTimeout(() => map.invalidateSize(), 150);
     window.addEventListener('resize', () => map.invalidateSize());
     document.addEventListener('visibilitychange', () => {
@@ -67,37 +79,35 @@
     });
   }
 
-  // ---------- démarrage ----------
+  // -------- start --------
   const mapEl = document.getElementById('map');
   if (!mapEl) {
-    fail('Élément #map introuvable sur la page.');
+    showError('Élément #map introuvable.');
     return;
   }
 
   (async () => {
     try {
-      // IMPORTANT : contourner un SW trop agressif
-      // -> on modifie l’URL ( ?v=2 ) ci-dessus et on incrémente la VERSION dans ton SW
+      // Important : anti-cache côté SW (au cas où un ancien fichier est servi)
+      // -> incrémente la VERSION dans ton service-worker aussi.
       await loadLeaflet();
 
-      // Leaflet OK -> on instancie la carte
       const map = L.map('map', { zoomControl: true });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      // Centre par défaut
-      map.setView([48.8566, 2.3522], 12); // Paris
+      // centre par défaut
+      map.setView([48.8566, 2.3522], 12);
 
-      // Affiche tes observations locales si tu en as
+      // récupère les observations locales si présentes
       function loadObservations() {
         try {
           const arr = JSON.parse(localStorage.getItem('fb_observations') || '[]');
           return Array.isArray(arr) ? arr : [];
         } catch { return []; }
       }
-
       const obs = loadObservations()
         .map(o => ({
           title: o.title || o.nom || 'Observation',
@@ -111,20 +121,19 @@
 
       const empty = document.getElementById('map-empty');
       if (!obs.length) {
+        empty && (empty.textContent = 'Aucune observation à afficher.'); 
         empty && (empty.style.display = 'block');
       } else {
         empty && (empty.style.display = 'none');
-
         const group = L.featureGroup();
         obs.forEach(o => {
-          L.marker([o.lat, o.lng])
-            .addTo(map)
-            .bindPopup(
-              `<b>${escapeHtml(o.title)}</b><br>
-               <small style="opacity:.8">par ${escapeHtml(o.userName)}${o.date ? ' · ' + escapeHtml(o.date) : ''}</small>
-               ${o.description ? `<div style="margin-top:.25rem">${escapeHtml(o.description)}</div>` : ''}`
-            );
-          group.addLayer(L.marker([o.lat, o.lng]));
+          const m = L.marker([o.lat, o.lng]).addTo(map);
+          m.bindPopup(
+            `<b>${escapeHtml(o.title)}</b><br>
+             <small style="opacity:.75">par ${escapeHtml(o.userName)}${o.date ? ' · ' + escapeHtml(o.date) : ''}</small>
+             ${o.description ? `<div style="margin-top:.25rem">${escapeHtml(o.description)}</div>` : ''}`
+          );
+          group.addLayer(m);
         });
         try { map.fitBounds(group.getBounds().pad(0.2)); } catch {}
       }
@@ -138,7 +147,7 @@
       }
     } catch (e) {
       console.error(e);
-      fail('Impossible de charger Leaflet (réseau/CDN/SW). Ouvre la console.');
+      showError('Impossible de charger Leaflet (réseau/CDN/SW). Ouvre la console pour les détails.');
     }
   })();
 })();
