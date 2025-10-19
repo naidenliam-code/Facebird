@@ -1,10 +1,26 @@
-// nav.js — Navigation globale FaceBird
-(function() {
-  // Empêche le doublon si déjà injecté
+// nav.js — Navigation globale FaceBird (anti-doublon)
+(function () {
+  // 0) Supprimer d'éventuelles anciennes barres (nav/menu) codées en dur
+  const looksLikeOldNav = (el) =>
+    /index\.html|feed\.html|observations\.html|quiz\.html|profil\.html|map\.html|classement\.html/i
+      .test(el.innerHTML);
+
+  // candidates: nav, header nav, .tabs, .menu, .navbar…
+  const candidates = Array.from(document.querySelectorAll('nav, header nav, .tabs, .menu, .navbar'));
+  candidates
+    .filter((el) => looksLikeOldNav(el))
+    .forEach((el) => {
+      // si ce nav a un parent header dédié, enlève tout le header
+      const h = el.closest('header');
+      (h || el).remove();
+    });
+
+  // 1) Évite une double injection si déjà injecté
   if (document.querySelector('header.site-header')) return;
 
   const currentPage = location.pathname.split('/').pop();
 
+  // 2) Marque HTML de la barre
   const navHTML = `
   <header class="site-header">
     <div class="brand">
@@ -26,7 +42,7 @@
 
   document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-  // 🌗 Mode sombre / clair
+  // 3) Thème sombre/clair
   const toggle = document.getElementById('toggle-dark');
   if (toggle) {
     const html = document.documentElement;
@@ -42,7 +58,7 @@
     });
   }
 
-  // 💅 Style intégré
+  // 4) Styles
   const style = document.createElement('style');
   style.textContent = `
     header.site-header {
@@ -50,19 +66,18 @@
       padding: .6rem 1rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display:flex; align-items:center; justify-content:space-between;
-      flex-wrap:wrap;
+      flex-wrap:wrap; gap:.75rem;
+      position: sticky; top: 0; z-index: 1000;
     }
-    .brand { font-weight:600; font-size:1.1rem; display:flex; align-items:center; gap:.3rem; }
+    .brand { font-weight:600; font-size:1.1rem; display:flex; align-items:center; gap:.35rem; }
+    nav.tabs { display:flex; gap:.25rem; flex-wrap:wrap; align-items:center; }
     nav.tabs a {
       text-decoration:none; color:inherit;
       padding:.4rem .8rem; border-radius:.4rem;
     }
-    nav.tabs a.active {
-      background:#1976d2; color:white;
-    }
-    nav.tabs a:hover {
-      background:#e0e0e0;
-    }
+    nav.tabs a.active { background:#1976d2; color:#fff; }
+    nav.tabs a:hover { background:#e0e0e0; }
+    #toggle-dark.btn { margin-left:.25rem; padding:.4rem .6rem; border-radius:.4rem; border:0; cursor:pointer; }
     [data-theme="dark"] header.site-header { background:#222; color:#eee; }
     [data-theme="dark"] nav.tabs a:hover { background:#333; }
     [data-theme="dark"] nav.tabs a.active { background:#1565c0; }
