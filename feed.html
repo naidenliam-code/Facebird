@@ -1,65 +1,33 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <base href="./"><!-- nécessaire pour PWA et GitHub Pages -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FaceBird 🐦 - Fil d’actualité</title>
-
-  <!-- Manifest et thème -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FaceBird 🐦 – Fil d’actualité</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1976d2">
-
-  <!-- Styles -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- barre de navigation -->
-  <header>
+  <main class="container">
     <h1>📰 Fil d’actualité</h1>
-    <nav>
-      <a href="index.html">Accueil</a>
-      <a href="feed.html" aria-current="page">Fil</a>
-      <a href="observations.html">Observations</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="profil.html">Profil</a>
-      <a href="carte.html">Carte</a>
-    </nav>
-  </header>
 
-  <!-- contenu principal -->
-  <main>
-    <section class="new-post">
-      <h2>➕ Nouveau post</h2>
-      <p>Partage une pensée, une astuce d’observation, une actualité…</p>
-
-      <textarea id="post-content" placeholder="Écris ton message ici..." rows="3"></textarea>
-
-      <div class="post-actions">
-        <button id="add-photo">📷 Ajouter une photo</button>
-        <button id="publish">📤 Publier</button>
-      </div>
-
-      <p class="note">💡 Conseil : évite les infos personnelles. Les posts sont enregistrés sur ton appareil (OK hors-ligne).</p>
-    </section>
-
-    <section class="feed">
-      <h2>Derniers posts</h2>
-      <div id="posts">
-        <p>Aucun post pour le moment. Écris un message ci-dessus ou ajoute une observation !</p>
+    <!-- zone de création de post -->
+    <section id="new-post" class="card">
+      <h2>+ Nouveau post</h2>
+      <textarea id="post-text" rows="3" placeholder="Partage une pensée, une astuce d’observation, une actu…"></textarea>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <input type="file" id="post-image" accept="image/*">
+        <button id="publish-post" class="btn">Publier</button>
       </div>
     </section>
+
+    <!-- liste des posts -->
+    <section id="feed" class="stack"></section>
   </main>
 
-  <!-- scripts -->
   <script src="nav.js" defer></script>
   <script src="feed.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
-  <script src="install-check.js" defer></script>
-
-  <!-- enregistrement du service worker -->
   <script src="sw-register.js" defer></script>
 </body>
 </html>
