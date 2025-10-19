@@ -1,6 +1,54 @@
 <!doctype html>
-<meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=map.html">
-<link rel="canonical" href="map.html">
-<title>Redirection…</title>
-<p>Redirection vers <a href="map.html">la carte</a>…</p>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FaceBird 🐦 – Carte</title>
+
+  <link rel="icon" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1976d2">
+
+  <!-- Leaflet (CSS + JS) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    /* Assure une hauteur visible */
+    #map {
+      height: min(70vh, 720px);
+      min-height: 380px;
+      border-radius: 12px;
+      background: #eaeaea;
+    }
+  </style>
+</head>
+<body>
+  <header id="app-nav"></header>
+
+  <main class="container">
+    <h1>🗺️ Carte des observations</h1>
+
+    <div id="map" class="card"></div>
+
+    <p id="map-empty" class="muted" style="display:none;margin-top:.75rem">
+      Aucune observation à afficher pour le moment. Ajoute-en via
+      <a href="observations.html">Observations</a> !
+    </p>
+  </main>
+
+  <script src="nav.js" defer></script>
+  <script src="carte.js?v=3" defer></script>
+  <script src="sw-register.js" defer></script>
+</body>
+</html>
