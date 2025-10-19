@@ -1,67 +1,67 @@
-// nav.js — Navigation commune FaceBird 🐦
-// Gère la barre de navigation et le mode sombre
+// nav.js — FaceBird Navigation
+(function() {
+  const currentPage = location.pathname.split('/').pop();
 
-document.addEventListener("DOMContentLoaded", () => {
-  const nav = document.getElementById("site-nav");
-
-  if (!nav) return;
-
-  // Définition des liens du menu principal
-  const links = [
-    { name: "Accueil", href: "index.html" },
-    { name: "Fil", href: "feed.html" },
-    { name: "Observations", href: "observations.html" },
-    { name: "Quiz", href: "quiz.html" },
-    { name: "Profil", href: "profil.html" },
-    { name: "Carte", href: "map.html" },
-  ];
-
-  // Crée le HTML du menu
-  const current = location.pathname.split("/").pop() || "index.html";
-  const items = links
-    .map(
-      (l) => `
-      <a href="${l.href}" class="${
-        current === l.href ? "active" : ""
-      }">${l.name}</a>`
-    )
-    .join("");
-
-  nav.innerHTML = `
-    <div class="nav-inner">
-      <div class="nav-left">
-        <a href="index.html" class="brand">🐦 FaceBird</a>
-        <div class="links">${items}</div>
-      </div>
-      <div class="nav-right">
-        <button id="theme-toggle" class="theme-btn" title="Changer le thème">🌙 Mode sombre</button>
-      </div>
+  const navHTML = `
+  <header class="site-header">
+    <div class="brand">
+      <span class="logo">🐦</span>
+      <span class="title">FaceBird</span>
     </div>
+    <nav class="tabs">
+      <a href="index.html" ${currentPage === 'index.html' ? 'class="active"' : ''}>Accueil</a>
+      <a href="feed.html" ${currentPage === 'feed.html' ? 'class="active"' : ''}>Fil</a>
+      <a href="observations.html" ${currentPage === 'observations.html' ? 'class="active"' : ''}>Observations</a>
+      <a href="quiz.html" ${currentPage === 'quiz.html' ? 'class="active"' : ''}>Quiz</a>
+      <a href="profil.html" ${currentPage === 'profil.html' ? 'class="active"' : ''}>Profil</a>
+      <a href="map.html" ${currentPage === 'map.html' ? 'class="active"' : ''}>Carte</a>
+      <a href="classement.html" ${currentPage === 'classement.html' ? 'class="active"' : ''}>Classement</a>
+      <button id="toggle-dark" class="btn">🌙 Mode sombre</button>
+    </nav>
+  </header>
   `;
 
-  // Active/désactive le mode sombre
-  const themeBtn = document.getElementById("theme-toggle");
-  const root = document.documentElement;
+  document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-  function setTheme(mode) {
-    if (mode === "dark") {
-      root.classList.add("dark");
-      themeBtn.textContent = "☀️ Mode clair";
-    } else {
-      root.classList.remove("dark");
-      themeBtn.textContent = "🌙 Mode sombre";
-    }
-    localStorage.setItem("fb-theme", mode);
+  // 🌗 Mode sombre clair
+  const toggle = document.getElementById('toggle-dark');
+  if (toggle) {
+    const html = document.documentElement;
+    const pref = localStorage.getItem('theme') || 'light';
+    html.dataset.theme = pref;
+    toggle.textContent = pref === 'dark' ? '☀️ Mode clair' : '🌙 Mode sombre';
+
+    toggle.addEventListener('click', () => {
+      const now = html.dataset.theme === 'dark' ? 'light' : 'dark';
+      html.dataset.theme = now;
+      localStorage.setItem('theme', now);
+      toggle.textContent = now === 'dark' ? '☀️ Mode clair' : '🌙 Mode sombre';
+    });
   }
 
-  // Appliquer le thème sauvegardé
-  const savedTheme = localStorage.getItem("fb-theme");
-  if (savedTheme === "dark") setTheme("dark");
-  else setTheme("light");
-
-  // Gestion du clic sur le bouton
-  themeBtn.addEventListener("click", () => {
-    const currentTheme = root.classList.contains("dark") ? "dark" : "light";
-    setTheme(currentTheme === "dark" ? "light" : "dark");
-  });
-});
+  // 💅 Petits styles de nav (optionnel)
+  const style = document.createElement('style');
+  style.textContent = `
+    header.site-header {
+      background: var(--nav-bg, #f6f8fa);
+      padding: .6rem 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .brand { font-weight:600; font-size:1.1rem; display:flex; align-items:center; gap:.3rem; }
+    nav.tabs a {
+      text-decoration:none; color:inherit;
+      padding:.4rem .8rem; border-radius:.4rem;
+    }
+    nav.tabs a.active {
+      background:#1976d2; color:white;
+    }
+    nav.tabs a:hover {
+      background:#e0e0e0;
+    }
+    [data-theme="dark"] header.site-header { background:#222; color:#eee; }
+    [data-theme="dark"] nav.tabs a:hover { background:#333; }
+  `;
+  document.head.appendChild(style);
+})();
