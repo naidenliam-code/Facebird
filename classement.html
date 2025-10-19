@@ -4,37 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FaceBird 🐦 – Classement</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .table { width:100%; border-collapse:collapse; }
+    .table th, .table td { padding:.6rem .75rem; border-bottom:1px solid #eee; }
+    .table th { text-align:left; background:#f7f7f9; }
+    [data-theme="dark"] .table th { background:#202329; }
+  </style>
 </head>
 <body>
   <main class="container">
     <h1>🏆 Classement</h1>
-    <p>Les membres avec le plus de points et d’observations.</p>
+    <p>Top des points FaceBird (local – stocké dans ton navigateur).</p>
 
-    <div class="controls">
-      <input id="search" placeholder="🔍 Rechercher un utilisateur..." />
-      <select id="filter">
-        <option value="all">Tous</option>
-        <option value="top10">Top 10</option>
-        <option value="top50">Top 50</option>
-      </select>
+    <div class="card">
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem">
+        <input id="searchUser" placeholder="Filtrer un pseudo…" />
+        <select id="sortBy">
+          <option value="points-desc">Points (↓)</option>
+          <option value="points-asc">Points (↑)</option>
+          <option value="name-asc">Nom (A→Z)</option>
+          <option value="name-desc">Nom (Z→A)</option>
+        </select>
+      </div>
+
+      <table class="table" id="board">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Pseudo</th>
+            <th>Points</th>
+            <th>Badges</th>
+          </tr>
+        </thead>
+        <tbody><!-- rempli par classement.js --></tbody>
+      </table>
     </div>
-
-    <table id="board">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Utilisateur</th>
-          <th>Points</th>
-          <th>Posts</th>
-          <th>Obs.</th>
-        </tr>
-      </thead>
-      <tbody id="board-body"></tbody>
-    </table>
   </main>
 
   <script src="nav.js" defer></script>
   <script src="classement.js" defer></script>
+  <script src="sw-register.js" defer></script>
 </body>
 </html>
