@@ -1,60 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <base href="./"><!-- important pour GitHub Pages et PWA -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FaceBird 🐦 - Accueil</title>
-
-  <!-- Manifest et thème -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1976d2">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FaceBird 🐦 – Accueil</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="container">
+    <h1>Bienvenue sur FaceBird</h1>
+    <p>Publie tes observations d’oiseaux, gagne des points 🍀 et explore la carte 🌍 !</p>
 
-  <!-- barre de navigation -->
-  <header>
-    <h1>🐦 FaceBird</h1>
-    <nav>
-      <a href="index.html" aria-current="page">Accueil</a>
-      <a href="feed.html">Fil</a>
-      <a href="observations.html">Observations</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="profil.html">Profil</a>
-      <a href="carte.html">Carte</a>
-    </nav>
-  </header>
+    <div class="actions">
+      <a href="observations.html" class="btn">🪶 Nouvelle observation</a>
+      <a href="feed.html" class="btn">📰 Voir le fil</a>
+      <a href="quiz.html" class="btn">🎯 Lancer un quiz</a>
+      <a href="map.html" class="btn">🗺️ Carte</a>
+    </div>
 
-  <!-- contenu principal -->
-  <main>
-    <section class="hero">
-      <h2>Bienvenue sur FaceBird</h2>
-      <p>Publie tes observations d’oiseaux, gagne des points 🧩 et explore la carte 🌍 !</p>
-
-      <div class="actions">
-        <a class="btn" href="observations.html">➕ Nouvelle observation</a>
-        <a class="btn" href="feed.html">📰 Voir le fil</a>
-        <a class="btn" href="quiz.html">🎯 Lancer un quiz</a>
-        <a class="btn" href="carte.html">🗺️ Carte</a>
-      </div>
-    </section>
-
-    <section class="install-hint">
-      <h3>📲 Installer FaceBird</h3>
-      <p>Installe FaceBird comme une vraie app pour un accès rapide et le mode hors-ligne.</p>
-    </section>
+    <h3>📱 Installer FaceBird</h3>
+    <p>Installe FaceBird comme une vraie app pour un accès rapide et le mode hors-ligne.</p>
   </main>
 
-  <!-- scripts -->
   <script src="nav.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
-  <script src="install-check.js" defer></script>
-
-  <!-- enregistrement du service worker -->
-  <script src="sw-register.js" defer></script>
 </body>
 </html>
