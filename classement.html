@@ -7,38 +7,31 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- nav insérée par nav.js (ou garde ta nav statique si tu préfères) -->
   <main class="container">
     <h1>🏆 Classement</h1>
-    <p class="subtitle">Les membres avec le plus de points.</p>
+    <p>Les membres avec le plus de points et d’observations.</p>
 
-    <div class="card p-3">
-      <div class="row gap-2">
-        <input id="search" class="input" placeholder="Recherche par pseudo…" />
-        <select id="filter" class="input">
-          <option value="all">Tous</option>
-          <option value="top10">Top 10</option>
-          <option value="top50">Top 50</option>
-        </select>
-      </div>
-
-      <div class="table-scroll mt-3">
-        <table class="table" id="board">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Utilisateur</th>
-              <th>Points</th>
-              <th>Posts</th>
-              <th>Obs.</th>
-            </tr>
-          </thead>
-          <tbody id="board-body">
-            <!-- rempli par classement.js -->
-          </tbody>
-        </table>
-      </div>
+    <div class="controls">
+      <input id="search" placeholder="🔍 Rechercher un utilisateur..." />
+      <select id="filter">
+        <option value="all">Tous</option>
+        <option value="top10">Top 10</option>
+        <option value="top50">Top 50</option>
+      </select>
     </div>
+
+    <table id="board">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Utilisateur</th>
+          <th>Points</th>
+          <th>Posts</th>
+          <th>Obs.</th>
+        </tr>
+      </thead>
+      <tbody id="board-body"></tbody>
+    </table>
   </main>
 
   <script src="nav.js" defer></script>
