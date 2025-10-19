@@ -1,5 +1,8 @@
-// nav.js — FaceBird Navigation
+// nav.js — Navigation globale FaceBird
 (function() {
+  // Empêche le doublon si déjà injecté
+  if (document.querySelector('header.site-header')) return;
+
   const currentPage = location.pathname.split('/').pop();
 
   const navHTML = `
@@ -23,7 +26,7 @@
 
   document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-  // 🌗 Mode sombre clair
+  // 🌗 Mode sombre / clair
   const toggle = document.getElementById('toggle-dark');
   if (toggle) {
     const html = document.documentElement;
@@ -39,7 +42,7 @@
     });
   }
 
-  // 💅 Petits styles de nav (optionnel)
+  // 💅 Style intégré
   const style = document.createElement('style');
   style.textContent = `
     header.site-header {
@@ -62,6 +65,7 @@
     }
     [data-theme="dark"] header.site-header { background:#222; color:#eee; }
     [data-theme="dark"] nav.tabs a:hover { background:#333; }
+    [data-theme="dark"] nav.tabs a.active { background:#1565c0; }
   `;
   document.head.appendChild(style);
 })();
