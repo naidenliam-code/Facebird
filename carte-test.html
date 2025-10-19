@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test Leaflet – FaceBird</title>
+
+  <!-- Leaflet (CSS + JS) : laisse exactement ces URL en https -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    html,body { height:100%; margin:0; }
+    /* Conteneur 100% hauteur viewport pour être sûr */
+    .wrap { min-height:100vh; display:flex; flex-direction:column; }
+    h1 { font-family: system-ui, sans-serif; font-weight: 700; margin: 16px; }
+    #map {
+      flex: 1 1 auto;
+      height: 70vh;       /* clé : garde cette hauteur */
+      min-height: 380px;
+      margin: 0 16px 16px;
+      border-radius: 12px;
+      background: #eaeaea;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🗺️ Test Leaflet</h1>
+    <div id="map"></div>
+  </div>
+
+  <script>
+    (function () {
+      // Sécurité : s’assurer que Leaflet est bien chargé
+      if (typeof L === 'undefined') {
+        alert('Leaflet ne s’est pas chargé (JS). Vérifie la console et le réseau.');
+        return;
+      }
+
+      const map = L.map('map', { zoomControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Centre Paris + un marqueur (tu DOIS voir au moins ça)
+      const center = [48.8566, 2.3522];
+      map.setView(center, 12);
+      L.marker(center).addTo(map).bindPopup('Paris').openPopup();
+
+      // Invalide la taille après rendu (utile si CSS/layout change)
+      setTimeout(() => map.invalidateSize(), 100);
+      window.addEventListener('resize', () => map.invalidateSize());
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) map.invalidateSize();
+      });
+    })();
+  </script>
+</body>
+</html>
