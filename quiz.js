@@ -1,12 +1,15 @@
-// quiz.js — FaceBird (remplacement complet)
+// quiz.js — FaceBird (remplacement complet et autonome)
 (function () {
   const root = document.getElementById('quiz');
   if (!root) {
-    console.error('[Quiz] Élément #quiz introuvable. Vérifie quiz.html');
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<pre style="padding:1rem;background:#fee;border:1px solid #f88">[Quiz] Élément #quiz introuvable</pre>'
+    );
     return;
   }
 
-  // Jeu de questions démo (remplace/augmente à volonté)
+  // Jeu de questions démo
   const questions = [
     {
       q: "Quel oiseau a un chant très varié et imite d’autres espèces ?",
@@ -14,7 +17,7 @@
       correct: 1
     },
     {
-      q: "Quel rapace est souvent actif la nuit ?",
+      q: "Quel rapace est surtout actif la nuit ?",
       choices: ["Buse variable", "Épervier d’Europe", "Chouette hulotte", "Faucon crécerelle"],
       correct: 2
     },
@@ -25,7 +28,7 @@
     }
   ];
 
-  // ——— UI de base
+  // UI de base (injectée)
   root.innerHTML = `
     <div id="q-progress" style="height:10px;border-radius:8px;background:var(--surface-2,#f0f2f7);overflow:hidden;margin:.75rem 0 1rem;">
       <div id="q-progress-bar" style="height:100%;width:0%;background:#1976d2;transition:width .25s;"></div>
@@ -50,23 +53,20 @@
     $bar.style.width = ((index / questions.length) * 100).toFixed(1) + '%';
 
     if (index >= questions.length) {
-      // Fin du quiz
       $title.textContent = `Terminé ! Score : ${score}/${questions.length}`;
       $choices.innerHTML = '';
       $footer.innerHTML = `
         <button class="btn" id="q-retry">Rejouer</button>
         <a class="btn" href="feed.html">Aller au fil</a>
       `;
-      root.querySelector('#q-retry').addEventListener('click', () => {
-        index = 0; score = 0; render();
-      });
+      const retry = root.querySelector('#q-retry');
+      if (retry) retry.addEventListener('click', () => { index = 0; score = 0; render(); });
 
-      // (Optionnel) Donner des points FaceBird
+      // Optionnel : +5 pts par bonne réponse
       try {
         const pts = Number(localStorage.getItem('fb_points') || '0');
-        // +5 points par bonne réponse
         localStorage.setItem('fb_points', String(pts + score * 5));
-      } catch (e) {}
+      } catch {}
 
       return;
     }
@@ -89,15 +89,16 @@
   function submit(choice) {
     const q = questions[index];
     const isCorrect = choice === q.correct;
+
     if (isCorrect) score++;
 
-    // Petit feedback visuel
+    // Feedback visuel
     [...$choices.children].forEach((btn, i) => {
       btn.disabled = true;
       btn.style.opacity = '0.9';
       btn.style.border = '1px solid transparent';
-      if (i === q.correct)   btn.style.borderColor = 'var(--ok,#19a974)';
-      if (i === choice && !isCorrect) btn.style.borderColor = 'var(--ko,#e53935)';
+      if (i === q.correct)                 btn.style.borderColor = 'var(--ok,#19a974)';
+      if (i === choice && !isCorrect)      btn.style.borderColor = 'var(--ko,#e53935)';
     });
 
     setTimeout(() => { index++; render(); }, 600);
