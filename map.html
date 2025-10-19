@@ -1,86 +1,25 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FaceBird 🐦 - Carte des observations</title>
-
-  <link rel="stylesheet" href="style.css">
-
-  <!-- PWA / Manifest -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FaceBird 🐦 – Carte</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1e73e8">
-  <link rel="apple-touch-icon" href="icon-192.png">
-
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="description" content="Carte interactive des observations FaceBird (OpenStreetMap + Leaflet).">
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <style>#map { height: 72vh; border-radius: 14px; overflow: hidden; }</style>
+  <link rel="stylesheet" href="style.css">
+  <!-- Leaflet (si tu l’utilises) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-  <header>
-    <h1>🌍 Carte des observations</h1>
-    <p>Visualise tes observations sur la carte</p>
-  </header>
-
-  <nav>
-    <a href="index.html">Accueil</a>
-    <a href="feed.html">Fil</a>
-    <a href="observations.html">Observations</a>
-    <a href="quiz.html">Quiz</a>
-    <a href="profil.html">Profil</a>
-    <a class="active" href="map.html">Carte</a>
-    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">🌙 Mode sombre</button>
-  </nav>
-
   <main class="container">
-    <div class="card">
-      <div id="map"></div>
-      <p class="muted" style="margin-top:8px">Astuce : sur “Observations”, clique “📍 Ajouter ma position” avant d’ajouter une observation.</p>
-    </div>
+    <h1>🗺️ Carte des observations</h1>
+    <div id="map" style="height:70vh;border-radius:.75rem;overflow:hidden;background:#eaeaea"></div>
   </main>
 
-  <footer>Créé par <b>Liam 👑</b></footer>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
-  <script src="theme.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="points.js" defer></script>
-
-  <script>
-    const STORAGE_KEY = 'fb-observations-v1';
-    const loadObs = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const map = L.map('map');
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '&copy; OpenStreetMap'
-      }).addTo(map);
-
-      const obs = loadObs().filter(o => typeof o.lat === 'number' && typeof o.lng === 'number');
-      const markers = [];
-
-      obs.forEach(o => {
-        const m = L.marker([o.lat, o.lng]).addTo(map);
-        const esc = (s='') => String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        m.bindPopup(`<b>🐦 ${esc(o.espece||'Observation')}</b><br><span class="badge">${esc(o.lieu||'Lieu')}</span> • ${esc(o.date||'')}<br>${esc(o.desc||'—')}`);
-        markers.push(m);
-      });
-
-      if (markers.length){
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.2));
-      } else {
-        map.setView([50.8503, 4.3517], 6); // Bruxelles par défaut
-      }
-    });
-  </script>
-
+  <script src="nav.js" defer></script>
+  <!-- Leaflet + ta logique carte -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="map.js" defer></script>
   <script src="sw-register.js" defer></script>
-  <script src="install-check.js" defer></script>
 </body>
 </html>
