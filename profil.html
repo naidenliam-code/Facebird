@@ -1,100 +1,28 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <base href="./">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FaceBird 🐦 – Profil</title>
-
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1976d2">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header id="site-nav">
-    <div class="nav-inner">
-      <div class="nav-left">
-        <span class="brand">🐦 FaceBird</span>
-        <div class="links">
-          <a href="index.html">Accueil</a>
-          <a href="feed.html">Fil</a>
-          <a href="observations.html">Observations</a>
-          <a href="quiz.html">Quiz</a>
-          <a href="profil.html" class="active">Profil</a>
-          <a href="carte.html">Carte</a>
-        </div>
-      </div>
-      <span id="auth-slot"></span>
-    </div>
-  </header>
-
   <main class="container">
-    <!-- Carte profil -->
-    <div class="card" id="profile-card">
-      <h2>Mon compte</h2>
-      <div class="row" id="profile-row"><!-- rempli par JS --></div>
-      <div class="row">
-        <button class="btn-small" id="logout-btn">Se déconnecter</button>
-      </div>
-    </div>
+    <h1>👤 Profil</h1>
 
-    <!-- Points -->
-    <div class="card" id="points-panel">
-      <h2>Mes points</h2>
-      <div class="kpi">
-        <strong id="points-total" data-role="points-total">0</strong> points
-      </div>
-      <div id="points-history" data-role="points-history" class="muted" style="margin-top:8px">
-        Historique vide.
-      </div>
-    </div>
+    <section id="auth" class="card">
+      <!-- profil.js affiche: login local, logout, infos, points, badges… -->
+    </section>
 
-    <!-- Badges -->
-    <div class="card" id="badges-panel">
-      <h2>Mes badges</h2>
-      <div id="badges-list" data-role="badges-list" class="row">
-        <span class="muted">Aucun badge pour le moment.</span>
-      </div>
-    </div>
+    <section id="stats" class="stack" style="margin-top:1rem">
+      <!-- stats utilisateur: points, niveau, badges -->
+    </section>
   </main>
 
-  <!-- scripts -->
-  <script src="login.js" defer></script>
-  <script src="points.js" defer></script>
-  <script src="badges.js" defer></script>
-  <script src="install-check.js" defer></script>
+  <script src="nav.js" defer></script>
+  <script src="profil.js" defer></script>
   <script src="sw-register.js" defer></script>
-
-  <script>
-    // Protège la page
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.fbAuth?.requireLogin) fbAuth.requireLogin();
-
-      // Remplir carte profil selon l'utilisateur connecté
-      const sess = window.fbAuth?.getSession?.();
-      const users = JSON.parse(localStorage.getItem('fb_users') || '{}');
-      const u = (sess && users[sess.username]) || {};
-
-      const row = document.getElementById('profile-row');
-      row.innerHTML = `
-        <div class="avatar"><img src="${u.avatarDataUrl || 'icons/icon-192.png'}" alt="avatar"></div>
-        <div>
-          <p><strong>${sess?.username || ''}</strong></p>
-          <p class="muted">Compte local (hors-ligne). Créé le : ${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</p>
-        </div>
-      `;
-
-      const logout = document.getElementById('logout-btn');
-      logout.onclick = () => { window.fbAuth?.clearSession(); location.href = 'login.html'; };
-
-      // Si tes scripts exposent des fonctions, tente de (re)rendre
-      try { window.FaceBirdPoints?.renderProfile?.(); } catch(e) {}
-      try { window.renderBadges?.(); } catch(e) {}
-    });
-
-    // Si login/logout survient, on recharge pour relancer points/badges
-    window.addEventListener('fb:login', () => location.reload());
-    window.addEventListener('fb:logout', () => location.reload());
-  </script>
 </body>
 </html>
