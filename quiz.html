@@ -3,21 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FaceBird 🐦 – Quiz</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>FaceBird 🐦 - Quiz</title>
+  <link rel="icon" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1976d2">
 </head>
 <body>
+  <header id="app-nav"></header>
+
   <main class="container">
     <h1>🎯 Quiz</h1>
-    <div id="quiz" class="card">
-      <!-- ton quiz est rendu ici par quiz.js -->
-    </div>
+    <!-- Le script va remplir ce conteneur -->
+    <div id="quiz" class="card"></div>
   </main>
 
+  <!-- Scripts (defer = important) -->
   <script src="nav.js" defer></script>
-  <script src="quiz.js" defer></script>
+  <script src="quiz.js?v=3" defer></script>
   <script src="sw-register.js" defer></script>
 </body>
 </html>
