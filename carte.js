@@ -1,204 +1,127 @@
-/* FaceBird - Carte : Loader robuste + diagnostics visibles  */
+/* FaceBird — carte.js (ultra-fallback)
+   - Essaie 10+ fournisseurs de tuiles
+   - Teste 1 tuile avant d’ajouter la couche (pour éviter “gris”)
+   - Messages d’erreur clairs
+*/
 
 (function () {
-  const elMap = document.getElementById('map');
-  if (!elMap) {
-    console.error('[FaceBird:carte] #map introuvable dans carte.html');
-    alert('Erreur FaceBird: conteneur #map manquant dans carte.html');
+  const mapEl = document.getElementById('map');
+  if (!mapEl) { alert('FaceBird: #map introuvable'); return; }
+  mapEl.style.background = '#eef1f5';
+  mapEl.style.minHeight  = mapEl.style.minHeight || '68vh';
+
+  let errBox = document.getElementById('map-error');
+  if (!errBox) {
+    errBox = document.createElement('div');
+    errBox.id = 'map-error';
+    errBox.style.display = 'none';
+    errBox.style.marginTop = '10px';
+    errBox.style.color = '#b91c1c';
+    errBox.style.background = '#fee2e2';
+    errBox.style.border = '1px solid #fecaca';
+    errBox.style.padding = '10px 12px';
+    errBox.style.borderRadius = '10px';
+    mapEl.parentElement && mapEl.parentElement.appendChild(errBox);
+  }
+  const showError = (m) => { console.warn('[FaceBird:carte] ' + m); errBox.textContent = m; errBox.style.display = 'block'; };
+
+  // ----- Leaflet présent ? (tu as déjà importé Leaflet dans carte.html via <script> et <link>) -----
+  if (typeof L === 'undefined') {
+    showError('Leaflet est introuvable. Vérifie que carte.html charge bien leaflet.css & leaflet.js.');
     return;
   }
 
-  // Petite aide visuelle
-  elMap.style.background = '#f1f2f6';
-  elMap.style.minHeight = elMap.style.minHeight || '68vh';
-
-  // Zone d'erreur
-  let elErr = document.getElementById('map-error');
-  if (!elErr) {
-    elErr = document.createElement('div');
-    elErr.id = 'map-error';
-    elErr.style.display = 'none';
-    elErr.style.marginTop = '10px';
-    elErr.style.color = '#b91c1c';
-    elErr.style.background = '#fee2e2';
-    elErr.style.border = '1px solid #fecaca';
-    elErr.style.padding = '10px 12px';
-    elErr.style.borderRadius = '10px';
-    elMap.parentElement && elMap.parentElement.appendChild(elErr);
-  }
-  function showError(msg) {
-    console.error('[FaceBird:carte] ' + msg);
-    elErr.textContent = msg;
-    elErr.style.display = 'block';
-  }
-
-  // 1) Charger Leaflet (CSS + JS) avec 3 CDN de secours
-  const CDN = {
-    css: [
-      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',
-      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'
-    ],
-    js: [
-      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
-    ]
-  };
-
-  function loadCSS(url) {
-    return new Promise((res, rej) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = url;
-      link.onload = () => res(url);
-      link.onerror = () => rej(new Error('CSS fail: ' + url));
-      document.head.appendChild(link);
-    });
-  }
-  function loadJS(url) {
-    return new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = url;
-      s.defer = true;
-      s.onload = () => res(url);
-      s.onerror = () => rej(new Error('JS fail: ' + url));
-      document.head.appendChild(s);
-    });
-  }
-  async function loadLeaflet() {
-    // CSS : premier OK => on continue
-    let cssOk = false, lastErr = null;
-    for (const url of CDN.css) {
-      try { await loadCSS(url); cssOk = true; console.log('[FaceBird:carte] CSS Leaflet:', url); break; }
-      catch (e) { lastErr = e; }
-    }
-    if (!cssOk) throw lastErr || new Error('Impossible de charger leaflet.css');
-
-    // JS : premier OK => L doit exister
-    for (const url of CDN.js) {
-      try {
-        await loadJS(url);
-        if (typeof L !== 'undefined') {
-          console.log('[FaceBird:carte] JS Leaflet:', url);
-          return;
-        }
-      } catch (e) { lastErr = e; }
-    }
-    throw lastErr || new Error('Impossible de charger leaflet.js');
-  }
-
-  // 2) Tuiles avec fallback : OSM → Carto → Stamen
-  const TILESETS = [
-    {
-      name: 'OSM',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      opts: { maxZoom: 19, attribution: '&copy; OpenStreetMap' }
-    },
-    {
-      name: 'Carto Light',
-      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      opts: { maxZoom: 20, attribution: '&copy; CartoDB' }
-    },
-    {
-      name: 'Stamen Toner',
-      url: 'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
-      opts: { maxZoom: 20, attribution: '&copy; Stamen' }
-    }
-  ];
-
-  function getObservations() {
+  // ----- Récupère les obs stockées (pour centrer) -----
+  function getObs() {
     try {
       const raw = localStorage.getItem('fb_observations');
       const list = raw ? JSON.parse(raw) : [];
       return Array.isArray(list) ? list : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   }
-
-  function computeCenter(obs) {
-    const DEFAULT = [50.5039, 4.4699]; // Belgique
-    if (!obs.length) return { center: DEFAULT, zoom: 7 };
-    const valid = obs.filter(o => typeof o.lat === 'number' && typeof o.lng === 'number');
-    if (!valid.length) return { center: DEFAULT, zoom: 7 };
-    const lat = valid.reduce((s, o) => s + o.lat, 0) / valid.length;
-    const lng = valid.reduce((s, o) => s + o.lng, 0) / valid.length;
+  function getCenter() {
+    const def = [50.5039, 4.4699]; // Belgique
+    const obs = getObs().filter(o => typeof o.lat === 'number' && typeof o.lng === 'number');
+    if (!obs.length) return { center: def, zoom: 7 };
+    const lat = obs.reduce((s, o) => s + o.lat, 0) / obs.length;
+    const lng = obs.reduce((s, o) => s + o.lng, 0) / obs.length;
     return { center: [lat, lng], zoom: 9 };
   }
 
-  function initMapWithTiles() {
-    const obs = getObservations();
-    const { center, zoom } = computeCenter(obs);
+  const { center, zoom } = getCenter();
+  const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView(center, zoom);
 
-    console.log('[FaceBird:carte] Init map @', center, 'zoom', zoom);
-    const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView(center, zoom);
+  // Marqueur test (si tu le vois → Leaflet tourne)
+  L.marker([50.5039, 4.4699]).addTo(map).bindPopup('Test 🇧🇪');
 
-    // Marqueur test (utile pr diagnostiquer “fond gris”)
-    L.marker([50.5039, 4.4699]).addTo(map).bindPopup('Test 🇧🇪 (si tu vois ce point, Leaflet tourne)');
+  // ----- Liste de tuiles (beaucoup de chances qu’ESRI passe) -----
+  const TILESETS = [
+    { name:'OSM', url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts:{maxZoom:19, subdomains:['a','b','c']} },
+    { name:'OSM FR', url:'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', opts:{maxZoom:20, subdomains:['a','b','c']} },
+    { name:'OSM DE', url:'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', opts:{maxZoom:18, subdomains:['a','b','c']} },
+    { name:'OSM HOT', url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', opts:{maxZoom:20, subdomains:['a','b','c']} },
+    { name:'OpenTopo', url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts:{maxZoom:17, subdomains:['a','b','c']} },
+    { name:'Carto Light', url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', opts:{maxZoom:20, subdomains:'abcd'} },
+    { name:'Carto Voyager', url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', opts:{maxZoom:20, subdomains:'abcd'} },
+    { name:'Stamen Toner', url:'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', opts:{maxZoom:20} },
+    // ESRI (très permissif, marche souvent quand OSM est bloqué)
+    { name:'ESRI Street', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:19} },
+    { name:'ESRI Topo', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:19} },
+    { name:'ESRI Gray', url:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:16} },
+  ];
 
-    // Essaie les tuiles l’une après l’autre si erreur
-    let current = 0;
-    function tryTileset(i) {
-      const set = TILESETS[i];
-      if (!set) {
-        showError('Toutes les sources de tuiles ont échoué. Réseau ou blocage des CDN ?');
-        return;
-      }
-      console.log('[FaceBird:carte] Essai tuiles :', set.name, set.url);
+  // Teste **une tuile** d’abord (au centre approximatif du Benelux pour z=6)
+  function testOneTile(tileset) {
+    return new Promise((resolve, reject) => {
+      // calcule une tuile au zoom 6 autour de la Belgique
+      const z = 6, lat = 50.5, lon = 4.4;
+      const xtile = Math.floor((lon + 180) / 360 * Math.pow(2, z));
+      const ytile = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
 
-      const layer = L.tileLayer(set.url, set.opts);
-      let hadTileError = false;
+      const url = tileset.url
+        .replace('{z}', z)
+        .replace('{x}', xtile)
+        .replace('{y}', ytile)
+        .replace('{s}', (tileset.opts.subdomains && tileset.opts.subdomains[0]) || 'a')
+        .replace('{r}', '');
 
-      layer.on('load', () => {
-        console.log('[FaceBird:carte] Tuiles OK via', set.name);
-        map.addLayer(layer);
-        setTimeout(() => map.invalidateSize(), 100);
-      });
-      layer.on('tileerror', (e) => {
-        hadTileError = true;
-        console.warn('[FaceBird:carte] tileerror', e);
-        // Attends un peu pour voir si au moins une tuile arrive
-        setTimeout(() => {
-          if (!layer._tiles || !Object.keys(layer._tiles).length) {
-            console.warn('[FaceBird:carte] Aucune tuile chargée via', set.name, '→ fallback suivant');
-            tryTileset(i + 1);
-          } else {
-            console.log('[FaceBird:carte] Certaines tuiles en erreur mais layer partiellement OK via', set.name);
-            map.addLayer(layer);
-          }
-        }, 1200);
-      });
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.referrerPolicy = 'no-referrer';
+      img.onload = () => resolve(true);
+      img.onerror = () => reject(new Error('tile blocked: ' + tileset.name));
+      img.src = url;
+    });
+  }
 
-      // Ajoute le layer (déclenche load/tileerror)
-      layer.addTo(map);
-    }
-
-    tryTileset(current);
-
-    // Place aussi tes observations si tu en as
-    obs
-      .filter(o => typeof o.lat === 'number' && typeof o.lng === 'number')
+  function addObsMarkers() {
+    const obs = getObs();
+    obs.filter(o => typeof o.lat === 'number' && typeof o.lng === 'number')
       .forEach(o => {
         L.marker([o.lat, o.lng]).addTo(map).bindPopup(
           `<strong>${o.nom ?? 'Observation'}</strong><br>${o.espece ?? ''} ${o.date ? ('• ' + o.date) : ''}`
         );
       });
-
-    // À tout hasard (layout tardif)
-    setTimeout(() => map.invalidateSize(), 500);
   }
 
-  // 3) Démarrage
-  loadLeaflet()
-    .then(() => {
-      console.log('[FaceBird:carte] Leaflet OK, version:', L.version);
-      initMapWithTiles();
-    })
-    .catch(err => {
-      showError('Leaflet indisponible : ' + err.message);
-    });
-
-  // Conseil : si tu as un Service Worker, il peut avoir mis en cache d’anciennes versions.
-  // Sur PC : Ctrl+F5 / DevTools > Application > Service Workers > "Unregister" puis reload.
+  (async function pickTiles() {
+    for (const t of TILESETS) {
+      try {
+        await testOneTile(t);
+        const layer = L.tileLayer(t.url, Object.assign({
+          attribution: '&copy; contributors',
+          crossOrigin: true
+        }, t.opts));
+        layer.on('load', () => console.log('[FaceBird:carte] Tuiles OK via', t.name));
+        layer.on('tileerror', (e) => console.warn('[FaceBird:carte] tileerror', t.name, e));
+        layer.addTo(map);
+        addObsMarkers();
+        setTimeout(() => map.invalidateSize(), 150);
+        return;
+      } catch (e) {
+        console.warn('[FaceBird:carte] KO', t.name, e.message);
+      }
+    }
+    showError('Toutes les sources de tuiles ont échoué. Probable blocage réseau/CDN. Essaie sur 4G ou un autre Wi-Fi.');
+  })();
 })();
