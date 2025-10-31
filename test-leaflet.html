@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Test Leaflet Direct</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+html,body{height:100%;margin:0}
+#map{height:100vh}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+console.log("Leaflet L =", typeof L);
+if (typeof L === 'undefined') {
+  alert("Leaflet non chargé !");
+} else {
+  const map = L.map('map').setView([48.8566, 2.3522], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+  L.marker([48.8566, 2.3522]).addTo(map).bindPopup('Paris');
+}
+</script>
+</body>
+</html>
