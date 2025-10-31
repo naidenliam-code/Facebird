@@ -3,52 +3,94 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FaceBird 🐦 – Carte</title>
+  <title>FaceBird — Carte</title>
 
-  <link rel="icon" href="favicon.svg">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1976d2">
-
-  <!-- Leaflet (CSS + JS) -->
+  <!-- Leaflet CSS (CDN officiel) -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    integrity="sha512-p6EOjYwF2f6ZhY3eYBq8k1n8Yl7C3JH0p2jZ2H2tZ8zUVIJ5v5Vt8F1xgGz0b6o0aUeQx3xQaxXo5l3v0uFQGA=="
     crossorigin=""
   />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
 
   <style>
-    /* Assure une hauteur visible */
-    #map {
-      height: min(70vh, 720px);
-      min-height: 380px;
-      border-radius: 12px;
-      background: #eaeaea;
+    :root {
+      --page-bg: #f6f7fb;
+      --card-bg: #fff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #1d4ed8;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    header {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 20px; background:#fff; border-bottom:1px solid #e5e7eb;
+      position:sticky; top:0; z-index:10;
+    }
+    header .brand { font-weight:700; }
+    nav { margin-left:auto; display:flex; gap:12px; }
+    nav a {
+      text-decoration:none; color:#0f172a; padding:6px 10px; border-radius:8px;
+    }
+    nav a.active { background:#e8f0ff; color:#1d4ed8; }
+
+    main { max-width:1100px; margin:26px auto; padding:0 16px; }
+    h1 { font-size:28px; margin:0 0 14px; display:flex; gap:10px; align-items:center; }
+    .card {
+      background:var(--card-bg); border-radius:14px; box-shadow:0 4px 18px rgba(15,23,42,.06);
+      padding:14px; border:1px solid #e5e7eb;
+    }
+
+    /* conteneur Leaflet */
+    #map { width:100%; height: 68vh; border-radius:12px; }
+
+    /* message d’erreur */
+    #map-error {
+      display:none; margin-top:10px; color:#b91c1c; background:#fee2e2; border:1px solid #fecaca;
+      padding:10px 12px; border-radius:10px;
     }
   </style>
 </head>
 <body>
-  <header id="app-nav"></header>
 
-  <main class="container">
-    <h1>🗺️ Carte des observations</h1>
+<header>
+  <div class="brand">🐦 FaceBird</div>
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="feed.html">Fil</a>
+    <a href="observations.html">Observations</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="profil.html">Profil</a>
+    <a href="carte.html" class="active">Carte</a>
+    <a href="classement.html">Classement</a>
+  </nav>
+</header>
 
-    <div id="map" class="card"></div>
+<main>
+  <h1>🗺️ Carte des observations</h1>
+  <div class="card">
+    <div id="map" aria-label="Carte Leaflet"></div>
+    <div id="map-error"></div>
+  </div>
+</main>
 
-    <p id="map-empty" class="muted" style="display:none;margin-top:.75rem">
-      Aucune observation à afficher pour le moment. Ajoute-en via
-      <a href="observations.html">Observations</a> !
-    </p>
-  </main>
+<!-- Leaflet JS (CDN officiel) -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha512-vhR9HqC8oQe9pOa9MpnwH8iJk8r3lYJX3Jk5QWl1gMv2m8qgJtW2z+7Yb28E6vC4gx0PRAy6rFQ9D0PxO7n1wQ=="
+  crossorigin=""
+  defer
+></script>
 
-  <script src="nav.js" defer></script>
-  <script src="carte.js?v=3" defer></script>
-  <script src="sw-register.js" defer></script>
+<!-- Ton script carte -->
+<script src="carte.js" defer></script>
+
 </body>
 </html>
