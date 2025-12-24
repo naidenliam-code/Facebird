@@ -316,3 +316,66 @@ hr {
   .container { padding: 10px 12px 24px; }
   .grid { grid-template-columns: 1fr; }
 }
+/* =========================
+   FaceBird — Dark mode NAV fix
+   ========================= */
+
+:root {
+  --bg: #f6f7fb;
+  --text: #0f172a;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --nav-bg: rgba(255,255,255,.92);
+  --nav-text: #0f172a;
+  --nav-active-bg: #2563eb;
+  --nav-active-text: #ffffff;
+}
+
+body.dark {
+  --bg: #0b1220;
+  --text: #e5e7eb;
+  --card: #0f172a;
+  --border: #1f2937;
+  --nav-bg: rgba(15,23,42,.92);
+  --nav-text: #e5e7eb;
+  --nav-active-bg: #3b82f6;
+  --nav-active-text: #0b1220;
+}
+
+/* Applique les variables */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Cible ta navbar (peu importe son HTML exact) */
+nav, .navbar, .topbar, header nav {
+  background: var(--nav-bg) !important;
+  color: var(--nav-text) !important;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+/* Liens dans la nav */
+nav a, .navbar a, .topbar a, header nav a {
+  color: var(--nav-text) !important;
+  text-decoration: none;
+}
+
+/* Onglet actif */
+nav a.active, .navbar a.active, .topbar a.active, header nav a.active,
+nav .active a, .navbar .active a {
+  background: var(--nav-active-bg) !important;
+  color: var(--nav-active-text) !important;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+/* Bouton mode sombre (si tu as un bouton) */
+#darkToggle, .dark-toggle, button[data-dark-toggle] {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
